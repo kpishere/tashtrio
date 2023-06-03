@@ -1,4 +1,4 @@
-;;; 80 characters wide please ;;;;;;;;;;;;;;;;;;;;;;;;;; 8-space tabs please ;;;
+// 80 characters wide please ;;;;;;;;;;;;;;;;;;;;;;;;;; 8-space tabs please ;;;
 
 
 ;
@@ -35,28 +35,26 @@
 ;                               '--------'                            ;
 ;;;                                                                 ;;;
 
+//// Assembler Directives ;;;
+// CONFIG1
+  CONFIG  FOSC = INTOSC         ; Oscillator Selection (INTOSC oscillator: I/O function on CLKIN pin)
+  CONFIG  WDTE = OFF            ; Watchdog Timer Enable (WDT disabled)
+  CONFIG  PWRTE = ON           ; Power-up Timer Enable (PWRT disabled)
+  CONFIG  MCLRE = OFF            ; MCLR Pin Function Select (MCLR/VPP pin function is enabled)
+  CONFIG  CP = OFF              ; Flash Program Memory Code Protection (Program memory code protection is disabled)
+  CONFIG  CPD = OFF             ; Data Memory Code Protection (Data memory code protection is disabled)
+  CONFIG  BOREN = OFF            ; Brown-out Reset Enable (Brown-out Reset enabled)
+  CONFIG  CLKOUTEN = OFF        ; Clock Out Enable (CLKOUT function is disabled. I/O or oscillator function on the CLKOUT pin)
+  CONFIG  IESO = OFF            ; Internal/External Switchover (Internal/External Switchover mode is disabled)
+  CONFIG  FCMEN = OFF           ; Fail-Safe Clock Monitor Enable (Fail-Safe Clock Monitor is disabled)
 
-;;; Assembler Directives ;;;
+// CONFIG2
+  CONFIG  WRT = OFF             ; Flash Memory Self-Write Protection (Write protection off)
+  CONFIG  PLLEN = ON            ; PLL Enable (4x PLL enabled for 32Mhz clock)
+  CONFIG  STVREN = ON          ; Stack Overflow/Underflow Reset Enable (Stack Overflow or Underflow will not cause a Reset)
+  CONFIG  LVP = OFF              ; Low-Voltage Programming Enable (Low-voltage programming enabled)
 
-	list		P=PIC12F1840, F=INHX32, ST=OFF, MM=OFF, R=DEC, X=ON
-	#include	P12F1840.inc
-	__config	_CONFIG1, _FOSC_INTOSC & _WDTE_OFF & _PWRTE_ON & _MCLRE_OFF & _CP_OFF & _CPD_OFF & _BOREN_OFF & _CLKOUTEN_OFF & _IESO_OFF & _FCMEN_OFF
-			;_FOSC_INTOSC	Internal oscillator, I/O on RA5
-			;_WDTE_OFF	Watchdog timer disabled
-			;_PWRTE_ON	Keep in reset for 64 ms on start
-			;_MCLRE_OFF	RA3/!MCLR is RA3
-			;_CP_OFF	Code protection off
-			;_CPD_OFF	Data memory protection off
-			;_BOREN_OFF	Brownout reset off
-			;_CLKOUTEN_OFF	CLKOUT disabled, I/O on RA4
-			;_IESO_OFF	Internal/External switch not needed
-			;_FCMEN_OFF	Fail-safe clock monitor not needed
-	__config	_CONFIG2, _WRT_OFF & _PLLEN_ON & _STVREN_ON & _LVP_OFF
-			;_WRT_OFF	Write protection off
-			;_PLLEN_ON	4x PLL on
-			;_STVREN_ON	Stack over/underflow causes reset
-			;_LVP_OFF	High-voltage on Vpp to program
-
+#include <xc.inc>
 
 ;;; Macros ;;;
 
@@ -74,10 +72,10 @@ DNOP	macro
 ;;; Constants ;;;
 
 ;WARNING: do NOT use RA2 for ADB, the Schmitt Trigger takes too long to react
-AP_APIN	equ	RA5	;Pin on PORTA where ADB bus is connected
-PP_CPIN	equ	RA2	;Pin on PORTA where PS/2 clock is connected
-PP_KPIN	equ	RA3	;Pin on PORTA where PS/2 keyboard is connected
-PP_MPIN	equ	RA4	;Pin on PORTA where PS/2 mouse is connected
+AP_APIN	equ	PORTA_RA5_POSN	;Pin on PORTA where ADB bus is connected
+PP_CPIN	equ	PORTA_RA2_POSN	;Pin on PORTA where PS/2 clock is connected
+PP_KPIN	equ	PORTA_RA3_POSN	;Pin on PORTA where PS/2 keyboard is connected
+PP_MPIN	equ	PORTA_RA4_POSN	;Pin on PORTA where PS/2 mouse is connected
 
 			;AP_FLAG:
 AP_RST	equ	7	;Set when a reset condition is detected, user clears
@@ -143,90 +141,79 @@ PU_TXME	equ	2	;Set when the mouse FSA wants to know when TX done
 
 ;;; Variable Storage ;;;
 
-	cblock	0x70	;Bank-common registers
-	
-	AP_FLAG	;ADB flags
-	AP_FSAP	;Pointer to where to resume ADB state machine
-	AP_SR	;ADB shift register
-	AP_BUF	;ADB buffer
-	AP_DTMR	;ADB down-cycle timer value
-	PP_FLAG	;PS/2 flags
-	PP_FSAP	;Pointer to where to resume PS/2 state machine
-	PP_SR	;PS/2 shift register
-	PP_BUF	;PS/2 buffer
-	X6
-	X5
-	X4
-	X3
-	X2
-	X1
-	X0
-	
-	endc
-
-	cblock	0x140	;Upper half of bank 2 registers
+	AP_FLAG	equ 0x70 ;ADB flags
+	AP_FSAP	equ 0x71 ;Pointer to where to resume ADB state machine
+	AP_SR	equ 0x72 ;ADB shift register
+	AP_BUF	equ 0x73 ;ADB buffer
+	AP_DTMR	equ 0x74 ;ADB down-cycle timer value
+	PP_FLAG	equ 0x75 ;PS/2 flags
+	PP_FSAP	equ 0x76 ;Pointer to where to resume PS/2 state machine
+	PP_SR	equ 0x77 ;PS/2 shift register
+	PP_BUF	equ 0x78 ;PS/2 buffer
+	X6 equ 0x79
+	X5 equ 0x7A
+	X4 equ 0x7B
+	X3 equ 0x7C
+	X2 equ 0x7D
+	X1 equ 0x7E
+	X0 equ 0x7F
 	
 	;ADB user program registers
-	AU_FLAG	;Flags
-	AU_FSA	;Current device state machine (upper byte of PC)
-	AU_FSAP	;Pointer to where to resume device state machine
-	AU_TEMP	;Temporary holding variable between states
+	AU_FLAG	equ 0x140 ;Flags
+	AU_FSA	equ 0x141 ;Current device state machine (upper byte of PC)
+	AU_FSAP	equ 0x142 ;Pointer to where to resume device state machine
+	AU_TEMP	equ 0x143 ;Temporary holding variable between states
 	
 	;ADB keyboard registers
-	AK_PUSH	;Push pointer for keyboard queue (0x2080-0x20BF)
-	AK_POP	;Pop pointer for keyboard queue (0x2080-0x20BF)
-	AK_R2H	;Register 2 high byte
-	AK_R2L	;Register 2 low byte
-	AK_MOD	;Keyboard modifier key state
-	AK_R3H	;Register 3 high byte
-	AK_R3L	;Register 3 low byte
+	AK_PUSH	equ 0x144 ;Push pointer for keyboard queue (0x2080-0x20BF)
+	AK_POP	equ 0x145 ;Pop pointer for keyboard queue (0x2080-0x20BF)
+	AK_R2H	equ 0x146 ;Register 2 high byte
+	AK_R2L	equ 0x147 ;Register 2 low byte
+	AK_MOD	equ 0x148 ;Keyboard modifier key state
+	AK_R3H	equ 0x149 ;Register 3 high byte
+	AK_R3L	equ 0x14A ;Register 3 low byte
 	
 	;ADB mouse registers
-	AM_DYH	;Delta Y high byte
-	AM_DYL	;Delta Y low byte
-	AM_DXH	;Delta X high byte
-	AM_DXL	;Delta X low byte
-	AM_BTN	;Mouse button state
-	AM_R3H	;Register 3 high byte
-	AM_R3L	;Register 3 low byte
+	AM_DYH	equ 0x14B ;Delta Y high byte
+	AM_DYL	equ 0x14C ;Delta Y low byte
+	AM_DXH	equ 0x14D ;Delta X high byte
+	AM_DXL	equ 0x14E ;Delta X low byte
+	AM_BTN	equ 0x14F ;Mouse button state
+	AM_R3H	equ 0x150 ;Register 3 high byte
+	AM_R3L	equ 0x151 ;Register 3 low byte
 	
 	;ADB modem registers
-	AD_RPSH	;Push pointer for modem RX (to Mac) queue (0x2000-0x203F)
-	AD_RPOP	;Pop pointer for modem RX (to Mac) queue (0x2000-0x203F)
-	AD_TPSH	;Push pointer for modem TX (from Mac) queue (0x2040-0x207F)
-	AD_TPOP	;Pop pointer for modem TX (from Mac) queue (0x2040-0x207F)
-	AD_TLEN	;Length of modem TX (from Mac) queue (0x2040-0x207F)
-	AD_R3H	;Register 3 high byte
-	AD_R3L	;Register 3 low byte
+	AD_RPSH	equ 0x152 ;Push pointer for modem RX (to Mac) queue (0x2000-0x203F)
+	AD_RPOP	equ 0x153 ;Pop pointer for modem RX (to Mac) queue (0x2000-0x203F)
+	AD_TPSH	equ 0x154 ;Push pointer for modem TX (from Mac) queue (0x2040-0x207F)
+	AD_TPOP	equ 0x155 ;Pop pointer for modem TX (from Mac) queue (0x2040-0x207F)
+	AD_TLEN	equ 0x156 ;Length of modem TX (from Mac) queue (0x2040-0x207F)
+	AD_R3H	equ 0x157 ;Register 3 high byte
+	AD_R3L	equ 0x158 ;Register 3 low byte
 	
 	;PS/2 user program registers
-	PU_FLAG	;Flags
-	PK_FSAP	;Pointer to where to resume PS/2 keyboard state machine
-	PK_RPT	;Last keycode pressed, to suppress typematic repeating
-	PM_FSAP	;Pointer to where to resume PS/2 mouse state machine
-	PM_TEMP	;Temporary holding variable between mouse states
+	PU_FLAG	equ 0x159 ;Flags
+	PK_FSAP	equ 0x15A ;Pointer to where to resume PS/2 keyboard state machine
+	PK_RPT	equ 0x15B ;Last keycode pressed, to suppress typematic repeating
+	PM_FSAP	equ 0x15C ;Pointer to where to resume PS/2 mouse state machine
+	PM_TEMP	equ 0x15D ;Temporary holding variable between mouse states
 	
-	endc
-
-
 ;;; Vectors ;;;
-
-	org	0x0		;Reset vector
-	goto	Init
-
-	org	0x4		;Interrupt vector
-
+psect resetVect, class=CODE, delta=2
+resetVect:
+    pagesel main
+    goto Init
 
 ;;; Interrupt Handler ;;;
-
-Interrupt
+psect interruptVect, class=CODE, delta=2
+Interrupt:
 	;TODO should the ADB timer enabled-or-not be handled like the PS/2 one?
 	movlp	0		;Copy the Timer0 flag into the carry bit so it
-	bcf	STATUS,C	; doesn't change on us mid-stream
-	btfsc	INTCON,TMR0IF	; "
-	bsf	STATUS,C	; "
-	btfsc	STATUS,C	;If the Timer0 flag is set and the interrupt is
-	btfss	INTCON,TMR0IE	; enabled, handle it as an event for the ADB
+	bcf	STATUS,STATUS_C_POSN	; doesn't change on us mid-stream
+	btfsc	INTCON,INTCON_TMR0IF_POSN	; "
+	bsf	STATUS,STATUS_C_POSN	; "
+	btfsc	STATUS,STATUS_C_POSN	;If the Timer0 flag is set and the interrupt is
+	btfss	INTCON,INTCON_TMR0IE_POSN	; enabled, handle it as an event for the ADB
 	bra	$+2		; state machine
 	call	IntAdbTimer	; "
 	movlb	7		;If the ADB pin has had a negative or positive
@@ -235,7 +222,7 @@ Interrupt
 	call	IntAdbEdge	; "
 	movlb	0		;If the Timer2 flag is set, handle it as an
 	movlp	0		; event for the PS/2 state machine (it returns
-	btfsc	PIR1,TMR2IF	; immediately if the timer is not enabled)
+	btfsc	PIR1,PIR1_TMR2IF_POSN	; immediately if the timer is not enabled)
 	call	IntPs2Timer	; "
 	movlb	7		;If the PS/2 clock pin has had a negative edge,
 	movlp	0		; handle it as an event for the PS/2 state
@@ -243,25 +230,25 @@ Interrupt
 	call	IntPs2Edge	; "
 	movlb	0		;If the UART receiver has a byte, handle it
 	movlp	0		; "
-	btfsc	PIR1,RCIF	; "
+	btfsc	PIR1,PIR1_RCIF_POSN	; "
 	call	IntRx		; "
 	movlb	0		;If the UART transmitter wants a byte, handle
-	btfsc	PIR1,TXIF	; it
+	btfsc	PIR1,PIR1_TXIF_POSN	; it
 	call	IntTx		; "
 	retfie
 
-IntAdbTimer
+IntAdbTimer:
 	movlb	1		;Disable the Timer0 interrupt
-	bcf	INTCON,TMR0IE	; "
+	bcf	INTCON,INTCON_TMR0IE_POSN	; "
 	movf	AP_FSAP,W	;Resume the ADB state machine
 	movlp	high AdbFsa	; "
 	callw			; "
 	movwf	AP_FSAP		;On return, save the address returned in W
-	bcf	INTCON,TMR0IF	;Clear the Timer0 interrupt flag and its mirror
-	bcf	STATUS,C	; in the carry bit
+	bcf	INTCON,INTCON_TMR0IF_POSN	;Clear the Timer0 interrupt flag and its mirror
+	bcf	STATUS,STATUS_C_POSN	; in the carry bit
 	return
 	
-IntAdbEdge
+IntAdbEdge:
 	movlw	1 << AP_APIN	;Toggle the edge that the IOC interrupt catches
 	xorwf	IOCAN,F		; "
 	xorwf	IOCAP,F		; "
@@ -270,70 +257,70 @@ IntAdbEdge
 	bra	IntAdbRising	; jump ahead, otherwise fall through
 	;fall through
 
-IntAdbFalling
+IntAdbFalling:
 	movlb	0		;If Timer0 overflowed, this falling edge is
-	btfsc	STATUS,C	; the first after a too-long period, so handle
+	btfsc	STATUS,STATUS_C_POSN	; the first after a too-long period, so handle
 	bra	IntAdbTimeout	; it as a timeout
 	movf	AP_FSAP,W	;Resume the ADB state machine
 	movlp	high AdbFsa	; "
 	callw			; "
 	movwf	AP_FSAP		;On return, save the address returned in W
-	bcf	INTCON,TMR0IF	;Clear the Timer0 interrupt flag
+	bcf	INTCON,INTCON_TMR0IF_POSN	;Clear the Timer0 interrupt flag
 	return
 
-IntAdbRising
+IntAdbRising:
 	movlb	0		;If Timer0 overflowed, this rising edge is at
-	btfsc	STATUS,C	; the end of a reset pulse
+	btfsc	STATUS,STATUS_C_POSN	; the end of a reset pulse
 	bra	IntAdbReset	; "
 	movf	TMR0,W		;Save the current value of Timer0 so it can be
 	movwf	AP_DTMR		; considered after its corresponding falling
 	clrf	TMR0		; edge, then clear it and its flag
-	bcf	INTCON,TMR0IF	; "
+	bcf	INTCON,INTCON_TMR0IF_POSN	; "
 	btfss	AP_FLAG,AP_RISE	;If the flag isn't set that the state machine
 	return			; wants to be resumed on a rising edge, done
 	movf	AP_FSAP,W	;Resume the ADB state machine
 	movlp	high AdbFsa	; "
 	callw			; "
 	movwf	AP_FSAP		;On return, save the address returned in W
-	bcf	INTCON,TMR0IF	;Clear the Timer0 interrupt flag
+	bcf	INTCON,INTCON_TMR0IF_POSN	;Clear the Timer0 interrupt flag
 	return
 
-IntAdbReset
+IntAdbReset:
 	bsf	AP_FLAG,AP_RST	;Set the reset flag
 	clrf	AP_DTMR		;Clear the down timer
 	;fall through
 
-IntAdbTimeout
+IntAdbTimeout:
 	clrf	AP_FSAP		;Reset the ADB state machine
 	clrf	TMR0		;Reset Timer0 and its flag and disable its
-	bcf	INTCON,TMR0IF	; interrupt
-	bcf	INTCON,TMR0IE	; "
+	bcf	INTCON,INTCON_TMR0IF_POSN	; interrupt
+	bcf	INTCON,INTCON_TMR0IE_POSN	; "
 	return
 
-IntPs2Timer
+IntPs2Timer:
 	movlb	1		;If the Timer2 interrupt isn't enabled, return
-	btfss	PIE1,TMR2IE	; "
+	btfss	PIE1,PIE1_TMR2IE_POSN	; "
 	return			; "
-	bcf	PIE1,TMR2IE	;Disable the Timer2 interrupt
+	bcf	PIE1,PIE1_TMR2IE_POSN	;Disable the Timer2 interrupt
 	movlb	0		; "
-	bcf	PIR1,TMR2IF	;Clear the Timer2 interrupt flag
+	bcf	PIR1,PIR1_TMR2IF_POSN	;Clear the Timer2 interrupt flag
 	movf	PP_FSAP,W	;Resume the PS/2 state machine
 	movlp	high Ps2Fsa	; "
 	callw			; "
 	movwf	PP_FSAP		;On return, save the address returned in W
 	return
 
-IntPs2Edge
+IntPs2Edge:
 	bcf	IOCAF,PP_CPIN	;Clear the IOC interrupt flag
 	movlb	1		;If we're here because we just pulled the clock
 	btfss	TRISA,PP_CPIN	; pin low, reset the state machine
 	clrf	PP_FSAP		; "
 	movlb	0		;If Timer2 has overflowed, reset the state
-	btfsc	PIR1,TMR2IF	; machine and set the timeout flag so the user
+	btfsc	PIR1,PIR1_TMR2IF_POSN	; machine and set the timeout flag so the user
 	clrf	PP_FSAP		; program knows about it
-	btfsc	PIR1,TMR2IF	; "
+	btfsc	PIR1,PIR1_TMR2IF_POSN	; "
 	bsf	PP_FLAG,PP_TOUT	; "
-	bcf	PIR1,TMR2IF	;Clear Timer2 and its interrupt
+	bcf	PIR1,PIR1_TMR2IF_POSN	;Clear Timer2 and its interrupt
 	clrf	TMR2		; "
 	movf	PP_FSAP,W	;Resume the PS/2 state machine
 	movlp	high Ps2Fsa	; "
@@ -341,14 +328,14 @@ IntPs2Edge
 	movwf	PP_FSAP		;On return, save the address returned in W
 	return
 
-IntRx
+IntRx:
 	movlb	2
 	movf	AD_RPSH,W	;Load the RX push pointer into FSR0
 	movwf	FSR0L		; "
 	incf	AD_RPSH,W	;If the queue is full, jump ahead to dump the
-	andlw	B'00111111'	; received byte
+	andlw	00111111B	; received byte
 	xorwf	AD_RPOP,W	; "
-	btfsc	STATUS,Z	; "
+	btfsc	STATUS,STATUS_Z_POSN	; "
 	bra	IntRx0		; "
 	incf	AD_RPSH,F	;Increment and wrap the RX push pointer
 	bcf	AD_RPSH,6	; "
@@ -358,20 +345,20 @@ IntRx
 	movlb	2		; "
 	bsf	AU_FLAG,AU_SRMD	;Raise the flag so the modem requests service
 	return
-IntRx0	movlb	3		;Dump the received byte, we have no space for
+IntRx0:	movlb	3		;Dump the received byte, we have no space for
 	movf	RCREG,W		; it
 	return
 
-IntTx
+IntTx:
 	movlb	2
 	movf	AD_TPOP,W	;If the queue is empty, disable the TX
 	xorwf	AD_TPSH,W	; interrupt and return
-	btfss	STATUS,Z	; "
+	btfss	STATUS,STATUS_Z_POSN	; "
 	bra	IntTx0		; "
 	movlb	1		; "
-	bcf	PIE1,TXIE	; "
+	bcf	PIE1,PIE1_TXIE_POSN	; "
 	return			; "
-IntTx0	movf	AD_TPOP,W	;Load the TX pop pointer into FSR0
+IntTx0:	movf	AD_TPOP,W	;Load the TX pop pointer into FSR0
 	movwf	FSR0L		; "
 	incf	AD_TPOP,F	;Increment and wrap the pointer
 	bsf	AD_TPOP,6	; "
@@ -385,21 +372,21 @@ IntTx0	movf	AD_TPOP,W	;Load the TX pop pointer into FSR0
 
 ;;; Mainline ;;;
 
-Init
+Init:
 	banksel	OSCCON		;32 MHz (w/PLL) high-freq internal oscillator
-	movlw	B'11110000'
+	movlw	11110000B
 	movwf	OSCCON
 	
 	banksel	RCSTA		;UART async mode, 2400 kHz
-	movlw	B'01001000'
+	movlw	01001000B
 	movwf	BAUDCON
 	movlw	13
-	movwf	SPBRGH
+	movwf	SP1BRGH
 	movlw	4
-	movwf	SPBRGL
-	movlw	B'00100110'
+	movwf	SP1BRGL
+	movlw	00100110B
 	movwf	TXSTA
-	movlw	B'10010000'
+	movlw	10010000B
 	movwf	RCSTA
 		
 	banksel	IOCAN		;ADB and PS/2 clock set IOCAF on negative edge
@@ -407,15 +394,15 @@ Init
 	movwf	IOCAN
 	
 	banksel	OPTION_REG	;Timer0 uses instruction clock, 1:32 prescaler,
-	movlw	B'01010100'	; thus ticking every 4 us; weak pull-ups on
+	movlw	01010100B	; thus ticking every 4 us; weak pull-ups on
 	movwf	OPTION_REG
 	
 	banksel	T1CON		;Timer1 ticks once per instruction cycle
-	movlw	B'00000001'
+	movlw	00000001B
 	movwf	T1CON
 	
 	banksel	T2CON		;Timer2 overflows after 3.072 ms
-	movlw	B'00101110'
+	movlw	00101110B
 	movwf	T2CON
 	
 	banksel	ANSELA		;All pins digital, not analog
@@ -425,11 +412,11 @@ Init
 	clrf	LATA
 	
 	banksel	TRISA		;TX out, rest are open-collector outputs,
-	movlw	B'00111110'	; currently off
+	movlw	00111110B	; currently off
 	movwf	TRISA
 	
 	banksel	PIE1		;RX peripheral interrupt on
-	movlw	B'00100000'
+	movlw	00100000B
 	movwf	PIE1
 	
 	clrf	AP_FLAG		;Set initial values of key globals
@@ -463,15 +450,15 @@ Init
 	movwf	FSR0H		; to linear memory
 	movwf	FSR1H
 	
-	movlw	B'11001000'	;On-change interrupt, peripheral interrupts so
+	movlw	11001000B	;On-change interrupt, peripheral interrupts so
 	movwf	INTCON		; Timer2 works, and interrupt subsystem on
 
-Main
+main:
 	call	SvcAdb		;Service the ADB user program
 	call	SvcPs2		;Service the PS/2 user program
-	bra	Main		;Loop
+	bra	main		;Loop
 
-SvcAdb
+SvcAdb:
 	movlb	2		;If the reset flag is set, handle it
 	btfsc	AP_FLAG,AP_RST	; "
 	call	SvcAdbReset	; "
@@ -488,16 +475,16 @@ SvcAdb
 	call	SvcAdbData	; "
 	return			; "
 
-SvcAdbReset
+SvcAdbReset:
 	movlw	0x62		;Keyboard register 3 puts it at address 0x2,
 	movwf	AK_R3H		; with SRQ enabled and handler ID 2 (Extended
 	movlw	0x02		; Keyboard)
 	movwf	AK_R3L		; "
-	movlw	B'11111111'	;Keyboard register 2 has all modifier keys up
+	movlw	11111111B	;Keyboard register 2 has all modifier keys up
 	movwf	AK_R2H		; and reserved bits set to 1
-	movlw	B'11111111'	; "
+	movlw	11111111B	; "
 	movwf	AK_R2L		; "
-	movlw	B'11111100'	; "
+	movlw	11111100B	; "
 	movwf	AK_MOD		; "
 	movlw	0x63		;Mouse register 3 puts it at address 0x3, with
 	movwf	AM_R3H		; SRQ enabled and handler ID 1 (100 cpi mouse)
@@ -507,66 +494,66 @@ SvcAdbReset
 	movwf	AD_R3H		; SRQ enabled and handler ID 0x36
 	movlw	0x36		; "
 	movwf	AD_R3L		; "
-	movlw	B'01110000'	;Set the SRQ enable bits for all peripherals
+	movlw	01110000B	;Set the SRQ enable bits for all peripherals
 	iorwf	AU_FLAG,F	; "
 	bcf	AP_FLAG,AP_RST	;Clear the reset flag, if it was set
 	return
 
-SvcAdbCommand
+SvcAdbCommand:
 	bcf	AP_FLAG,AP_RXCI	;Clear the command flag
 	movf	AP_BUF,W	;If the low four bits of the command are zero,
-	andlw	B'00001111'	; this is a SendReset command and should be
-	btfsc	STATUS,Z	; treated the same as a reset pulse
+	andlw	00001111B	; this is a SendReset command and should be
+	btfsc	STATUS,STATUS_Z_POSN	; treated the same as a reset pulse
 	bra	SvcAdbReset	; "
 	movlp	0		;Set PCLATH to 0 in case no device matches
 	swapf	AK_R3H,W	;If the device being addressed matches the
 	xorwf	AP_BUF,W	; address of the keyboard, load the high byte
-	andlw	B'11110000'	; of the keyboard's state machine into PCLATH
-	btfsc	STATUS,Z	; "
+	andlw	11110000B	; of the keyboard's state machine into PCLATH
+	btfsc	STATUS,STATUS_Z_POSN	; "
 	movlp	high AKFsa	; "
 	swapf	AM_R3H,W	;If the device being addressed matches the
 	xorwf	AP_BUF,W	; address of the mouse, load the high byte of
-	andlw	B'11110000'	; the mouse's state machine into PCLATH
-	btfsc	STATUS,Z	; "
+	andlw	11110000B	; the mouse's state machine into PCLATH
+	btfsc	STATUS,STATUS_Z_POSN	; "
 	movlp	high AMFsa	; "
 	swapf	AD_R3H,W	;If the device being addressed matches the
 	xorwf	AP_BUF,W	; address of the modem, load the high byte of
-	andlw	B'11110000'	; the modem's state machine into PCLATH
-	btfsc	STATUS,Z	; "
+	andlw	11110000B	; the modem's state machine into PCLATH
+	btfsc	STATUS,STATUS_Z_POSN	; "
 	movlp	high ADFsa	; "
 	movf	PCLATH,W	;Save the matched state machine for later use
 	movwf	AU_FSA		; "
-	btfsc	STATUS,Z	;If none of the devices had an address match,
+	btfsc	STATUS,STATUS_Z_POSN	;If none of the devices had an address match,
 	bra	SvcAdC0		; don't enter a state machine
 	movlw	0		;Call into the initial state of the selected
 	callw			; device's state machine
 	movwf	AU_FSAP		;On returning, save the address returned in W
 	;TODO the device being serviced should not call for SRQ
-SvcAdC0	bcf	AP_FLAG,AP_SRQ	;If any device is calling for service, set the
+SvcAdC0:	bcf	AP_FLAG,AP_SRQ	;If any device is calling for service, set the
 	swapf	AU_FLAG,W	; ADB peripheral's SRQ flag
 	andwf	AU_FLAG,W	; "
-	btfss	STATUS,Z	; "
+	btfss	STATUS,STATUS_Z_POSN	; "
 	bsf	AP_FLAG,AP_SRQ	; "
 	btfsc	AD_TLEN,5	;If the TX queue is half full, raise SRQ to
 	bsf	AP_FLAG,AP_SRQ	; try and stall for time to empty it...
 	movlp	0		;Return PCLATH to 0 for normal operation
 	return
 
-SvcAdbData
+SvcAdbData:
 	movf	AU_FSA,W	;If the last command byte selected a state
-	btfsc	STATUS,Z	; machine, resume it at the point from which
+	btfsc	STATUS,STATUS_Z_POSN	; machine, resume it at the point from which
 	bra	SvcAdD0		; it was last left; if not, don't
 	movwf	PCLATH		; "
 	movf	AU_FSAP,W	; "
 	callw			; "
 	movwf	AU_FSAP		;On returning, save the address returned in W
 	movlp	0		;Return PCLATH to 0 for normal operation
-SvcAdD0	bcf	AP_FLAG,AP_RXDI	;Clear the flags that could have brought us
+SvcAdD0:	bcf	AP_FLAG,AP_RXDI	;Clear the flags that could have brought us
 	bcf	AP_FLAG,AP_COL	; here
 	bcf	AP_FLAG,AP_DONE	; "
 	return
 
-SvcPs2
+SvcPs2:
 	;TODO clear TXKE/TXME on timeout too?
 	movlb	2		;If the timer has expired on the bus, reset
 	btfsc	PP_FLAG,PP_TOUT	; both state machines
@@ -586,15 +573,15 @@ SvcPs2
 	btfss	PU_FLAG,PU_TXME	; state machine has set itself to receive such
 	return			; events, jump into its state machine
 	bra	SvcPs2N		; "
-SvcPs2K	bcf	PP_FLAG,PP_RXKI	;Clear the receive flag
-SvcPs2L	movf	PK_FSAP,W	;Resume keyboard state machine
+SvcPs2K:	bcf	PP_FLAG,PP_RXKI	;Clear the receive flag
+SvcPs2L:	movf	PK_FSAP,W	;Resume keyboard state machine
 	movlp	high PKFsa	; "
 	callw			; "
 	movwf	PK_FSAP		;On return, save the address returned in W
 	movlp	0		;Return PCLATH to 0 for normal operation
 	return
-SvcPs2M	bcf	PP_FLAG,PP_RXMI	;Clear the receive flag
-SvcPs2N	movf	PM_FSAP,W	;Resume mouse state machine
+SvcPs2M:	bcf	PP_FLAG,PP_RXMI	;Clear the receive flag
+SvcPs2N:	movf	PM_FSAP,W	;Resume mouse state machine
 	movlp	high PMFsa	; "
 	callw			; "
 	movwf	PM_FSAP		;On return, save the address returned in W
@@ -604,8 +591,9 @@ SvcPs2N	movf	PM_FSAP,W	;Resume mouse state machine
 
 ;;; Lookup Tables ;;;
 
-PKLut	org	0x800
-
+psect PKLut, class=CODE, abs, delta=2 
+ORG	800h
+PKLut:
 	retlw	0xFF
 	retlw	0x65
 	retlw	0xFF
@@ -866,26 +854,28 @@ PKLut	org	0x800
 
 ;;; State Machines ;;;
 
-PKFsa	org	0x900
+psect PKFsa, class=CODE,abs, delta=2
+ORG	900h
+PKFsa:
 
-PKFsaStart
+PKFsaStart:
 	btfsc	PU_FLAG,PU_APPS	;If the apps key is held down, incoming bytes
 	bra	PKFsaAp		; are treated quite differently, skip ahead
 	movf	PP_BUF,W	;If the incoming byte is 0x77, it's Num Lock,
 	addlw	-119		; which is treated specially depending on the
-	btfsc	STATUS,Z	; state of the nonexistent special control key
+	btfsc	STATUS,STATUS_Z_POSN	; state of the nonexistent special control key
 	bra	PKFSta3		; "
 	addlw	-12		;If the incoming byte is 0x83, it's F7, the ONE
-	btfsc	STATUS,Z	; keycode for which the MSB is set; who the
+	btfsc	STATUS,STATUS_Z_POSN	; keycode for which the MSB is set; who the
 	bra	PKFSta2		; hell invented this stupid protocol?
 	addlw	-93		;If the incoming byte is 0xE0, this signals an
-	btfsc	STATUS,Z	; extended code, so transition accordingly and
+	btfsc	STATUS,STATUS_Z_POSN	; extended code, so transition accordingly and
 	retlw	low PKFsaE0	; wait for the keycode it's escaping
 	addlw	-1		;If the incoming byte is 0xE1, this signals an
-	btfsc	STATUS,Z	; extended extended code which is only used
+	btfsc	STATUS,STATUS_Z_POSN	; extended extended code which is only used
 	retlw	low PKFsaE1	; when the user pushes the Pause (F15) key
 	addlw	-15		;If the incoming byte is 0xF0, this signals the
-	btfsc	STATUS,Z	; release of a key, transition accordingly and
+	btfsc	STATUS,STATUS_Z_POSN	; release of a key, transition accordingly and
 	retlw	low PKFsaF0	; wait for the keycode being released
 	btfsc	PP_BUF,7	;If it's none of those and the MSB is set, just
 	retlw	low PKFsaStart	; ignore it
@@ -895,17 +885,17 @@ PKFsaStart
 	movlp	high PKLut	; "
 	callw			; "
 	incf	WREG,W		;If it's 0xFF, it's invalid, so ignore it
-	btfsc	STATUS,Z	; "
+	btfsc	STATUS,STATUS_Z_POSN	; "
 	retlw	low PKFsaStart	; "
 	decf	WREG,W		; "
 	xorlw	0x39		;If the key being pressed is caps lock and the
-	btfss	STATUS,Z	; caps-lock-locked bit is set, suppress the key
+	btfss	STATUS,STATUS_Z_POSN	; caps-lock-locked bit is set, suppress the key
 	bra	PKFSta0		; press event
 	btfsc	PU_FLAG,PU_CAPS	; "
 	retlw	low PKFsaStart	; "
-PKFSta0	xorlw	0x39		; "
-PKFSta1	xorwf	PK_RPT,W	;If this keycode is the same as the one we most
-	btfsc	STATUS,Z	; recently sent, suppress it
+PKFSta0:	xorlw	0x39		; "
+PKFSta1:	xorwf	PK_RPT,W	;If this keycode is the same as the one we most
+	btfsc	STATUS,STATUS_Z_POSN	; recently sent, suppress it
 	retlw	low PKFsaStart	; "
 	xorwf	PK_RPT,W	;Otherwise, keep this one as the most recent
 	movwf	PK_RPT		; keycode
@@ -914,65 +904,65 @@ PKFSta1	xorwf	PK_RPT,W	;If this keycode is the same as the one we most
 	bcf	AK_PUSH,6	; pointer
 	bsf	AU_FLAG,AU_SRKB	;Set flag so ADB keyboard requests service
 	retlw	low PKFsaStart	;Wait for the next byte
-PKFSta2	movf	AK_PUSH,W	;The ADB keycode for F7 is 0x62, so load that
+PKFSta2:	movf	AK_PUSH,W	;The ADB keycode for F7 is 0x62, so load that
 	movwf	FSR0L		; to push on top of the keyboard queue and
 	movlw	0x62		; continue above
 	bra	PKFSta1		; "
-PKFSta3	movf	AK_PUSH,W	;The ADB keycode for Num Lock/Clear is 0x47,
+PKFSta3:	movf	AK_PUSH,W	;The ADB keycode for Num Lock/Clear is 0x47,
 	movwf	FSR0L		; but if the nonexistent special control key is
 	movlw	0x47		; down, this is a press of Pause/F15 instead so
 	btfsc	PU_FLAG,PU_SCTL	; load the correct byte to push on top of the
 	movlw	0x71		; keyboard queue and continue above
 	bra	PKFSta1		; "
-PKFsaAp	movf	PP_BUF,W	;With the apps key held down...
+PKFsaAp:	movf	PP_BUF,W	;With the apps key held down...
 	addlw	-4		;If the incoming byte is 0x04, it's F3, so set
-	btfsc	STATUS,Z	; serial baud rate to 2400
+	btfsc	STATUS,STATUS_Z_POSN	; serial baud rate to 2400
 	bra	PKFABR2		; "
 	addlw	-1		;If the incoming byte is 0x05, it's F1, so set
-	btfsc	STATUS,Z	; serial baud rate to 300
+	btfsc	STATUS,STATUS_Z_POSN	; serial baud rate to 300
 	bra	PKFABR3		; "
 	addlw	-1		;If the incoming byte is 0x06, it's F2, so set
-	btfsc	STATUS,Z	; serial baud rate to 1200
+	btfsc	STATUS,STATUS_Z_POSN	; serial baud rate to 1200
 	bra	PKFABR1		; "
 	addlw	-6		;If the incoming byte is 0x0C, it's F4, so set
-	btfsc	STATUS,Z	; serial baud rate to 4800
+	btfsc	STATUS,STATUS_Z_POSN	; serial baud rate to 4800
 	bra	PKFABR4		; "
 	addlw	-107		;If the incoming byte is 0x77, it's Num Lock,
-	btfsc	STATUS,Z	; so check if the nonexistent special control
+	btfsc	STATUS,STATUS_Z_POSN	; so check if the nonexistent special control
 	bra	PKFAClr		; key is down and send power key if it is
 	addlw	-105		;If the incoming byte is 0xE0, this signals an
-	btfsc	STATUS,Z	; extended code, so transition accordingly and
+	btfsc	STATUS,STATUS_Z_POSN	; extended code, so transition accordingly and
 	retlw	low PKFsaAppsE0	; wait for the keycode it's escaping
 	addlw	-1		;If the incoming byte is 0xE1, this signals an
-	btfsc	STATUS,Z	; extended extended code which is only used
+	btfsc	STATUS,STATUS_Z_POSN	; extended extended code which is only used
 	retlw	low PKFsaAppsE1	; when the user pushes the Pause (F15) key
 	addlw	-15		;If the incoming byte is 0xF0, this signals the
-	btfsc	STATUS,Z	; release of a key, transition accordingly and
+	btfsc	STATUS,STATUS_Z_POSN	; release of a key, transition accordingly and
 	retlw	low PKFsaAppsF0	; wait for the keycode being released
 	retlw	low PKFsaStart	;If it's none of those, ignore it
-PKFABR2	movlb	3		;Set UART baud rate to the default of 2400
+PKFABR2:	movlb	3		;Set UART baud rate to the default of 2400
 	movlw	13		; "
-	movwf	SPBRGH		; "
+	movwf	SP1BRGH		; "
 	movlw	4		; "
-PKFABRF	movwf	SPBRGL		; "
+PKFABRF:	movwf	SP1BRGL		; "
 	movlb	2		; "
 	retlw	low PKFsaStart	; "
-PKFABR3	movlb	3		;Set UART baud rate to 300
+PKFABR3:	movlb	3		;Set UART baud rate to 300
 	movlw	104		; "
-	movwf	SPBRGH		; "
+	movwf	SP1BRGH		; "
 	movlw	42		; "
 	bra	PKFABRF		; "
-PKFABR1	movlb	3		;Set UART baud rate to 1200
+PKFABR1:	movlb	3		;Set UART baud rate to 1200
 	movlw	26		; "
-	movwf	SPBRGH		; "
+	movwf	SP1BRGH		; "
 	movlw	10		; "
 	bra	PKFABRF		; "
-PKFABR4	movlb	3		;Set UART baud rate to 4800
+PKFABR4:	movlb	3		;Set UART baud rate to 4800
 	movlw	6		; "
-	movwf	SPBRGH		; "
+	movwf	SP1BRGH		; "
 	movlw	130		; "
 	bra	PKFABRF		; "
-PKFAClr	btfss	PU_FLAG,PU_SCTL	;If the nonexistent special control key is not
+PKFAClr:	btfss	PU_FLAG,PU_SCTL	;If the nonexistent special control key is not
 	retlw	low PKFsaStart	; down, ignore this keycode
 	movf	AK_PUSH,W	;Load the push point of the ADB keyboard queue
 	movwf	FSR0L		; into FSR0
@@ -983,28 +973,28 @@ PKFAClr	btfss	PU_FLAG,PU_SCTL	;If the nonexistent special control key is not
 	bsf	AU_FLAG,AU_SRKB	;Set flag so ADB keyboard requests service
 	retlw	low PKFsaStart	;Wait for the next byte
 
-PKFsaE0
+PKFsaE0:
 	movf	PP_BUF,W	;If the incoming byte is 0xF0, this signals the
 	xorlw	0xF0		; release of an 0xE0-escaped key, so transition
-	btfsc	STATUS,Z	; accordingly and wait for the escaped keycode
+	btfsc	STATUS,STATUS_Z_POSN	; accordingly and wait for the escaped keycode
 	retlw	PKFsaE0F0	; being released
 	xorlw	0xDF		;If the incoming byte is 0x2F, this is the apps
-	btfsc	STATUS,Z	; key, which is used as a modifier key for
+	btfsc	STATUS,STATUS_Z_POSN	; key, which is used as a modifier key for
 	bra	PKFsE00		; special control commands
 	btfsc	PP_BUF,7	;If it's anything else with the MSB set, just
 	bra	PKFsaStart	; ignore it
 	movf	AK_PUSH,W	;Load the push point of the ADB keyboard queue
 	movwf	FSR0L		; into FSR0
 	movf	PP_BUF,W	;Convert the keycode from PS/2 to ADB (setting
-	iorlw	B'10000000'	; the MSB so it looks at the upper half of the
+	iorlw	10000000B	; the MSB so it looks at the upper half of the
 	movlp	high PKLut	; LUT)
 	callw			; "
 	incf	WREG,W		;If it's 0xFF, it's invalid, so ignore it
-	btfsc	STATUS,Z	; "
+	btfsc	STATUS,STATUS_Z_POSN	; "
 	retlw	low PKFsaStart	; "
 	decf	WREG,W		; "
 	xorwf	PK_RPT,W	;If this keycode is the same as the one we most
-	btfsc	STATUS,Z	; recently sent, suppress it
+	btfsc	STATUS,STATUS_Z_POSN	; recently sent, suppress it
 	retlw	low PKFsaStart	; "
 	xorwf	PK_RPT,W	;Otherwise, keep this one as the most recent
 	movwf	PK_RPT		; keycode
@@ -1013,26 +1003,26 @@ PKFsaE0
 	bcf	AK_PUSH,6	; pointer
 	bsf	AU_FLAG,AU_SRKB	;Set flag so ADB keyboard requests service
 	retlw	low PKFsaStart	;Wait for the next byte
-PKFsE00	bsf	PU_FLAG,PU_APPS	;Set the apps-key-down bit and wait for the
+PKFsE00:	bsf	PU_FLAG,PU_APPS	;Set the apps-key-down bit and wait for the
 	retlw	low PKFsaStart	; next byte
 
-PKFsaE1
+PKFsaE1:
 	movf	PP_BUF,W	;If the incoming byte is 0xF0, this signals the
 	xorlw	0xF0		; release of an 0xE1-escaped key, so transition
-	btfsc	STATUS,Z	; accordingly and wait for the escaped keycode
+	btfsc	STATUS,STATUS_Z_POSN	; accordingly and wait for the escaped keycode
 	retlw	low PKFsaE1F0	; being released
 	xorlw	0xE4		;If the incoming byte is 0x14, this signals the
-	btfsc	STATUS,Z	; press of the nonexistent special control key
+	btfsc	STATUS,STATUS_Z_POSN	; press of the nonexistent special control key
 	bsf	PU_FLAG,PU_SCTL	; used in the pressing of the Pause (F15) key
 	retlw	low PKFsaStart	;Wait for the next byte
 
-PKFsaF0
+PKFsaF0:
 	movf	PP_BUF,W	;If the incoming byte is 0x77, it's Num Lock,
 	addlw	-119		; which is treated specially depending on the
-	btfsc	STATUS,Z	; state of the nonexistent special control key
+	btfsc	STATUS,STATUS_Z_POSN	; state of the nonexistent special control key
 	bra	PKFF03		; "
 	addlw	-12		;If the incoming byte is 0x83, it's F7, blah
-	btfsc	STATUS,Z	; blah stupid protocol
+	btfsc	STATUS,STATUS_Z_POSN	; blah stupid protocol
 	bra	PKFF02		; "
 	btfsc	PP_BUF,7	;If it's anything else with the MSB set, just
 	bra	PKFsaStart	; ignore it
@@ -1042,31 +1032,31 @@ PKFsaF0
 	movlp	high PKLut	; "
 	callw			; "
 	incf	WREG,W		;If it's 0xFF, it's invalid, so ignore it
-	btfsc	STATUS,Z	; "
+	btfsc	STATUS,STATUS_Z_POSN	; "
 	retlw	low PKFsaStart	; "
 	decf	WREG,W		; "
 	xorlw	0x39		;If the key being released is caps lock, toggle
-	btfss	STATUS,Z	; the caps-lock-locked bit and if it's set,
+	btfss	STATUS,STATUS_Z_POSN	; the caps-lock-locked bit and if it's set,
 	bra	PKFF00		; suppress the key release event; otherwise,
 	movlw	1 << PU_CAPS	; let the event go through
 	xorwf	PU_FLAG,F	; "
 	movlw	0		; "
 	btfsc	PU_FLAG,PU_CAPS	; "
 	retlw	low PKFsaStart	; "
-PKFF00	xorlw	0x39		; "	
-	iorlw	B'10000000'	;Set its MSB before pushing it onto the ADB
-PKFF01	movwf	INDF0		; keyboard queue to indicate a released key,
+PKFF00:	xorlw	0x39		; "	
+	iorlw	10000000B	;Set its MSB before pushing it onto the ADB
+PKFF01:	movwf	INDF0		; keyboard queue to indicate a released key,
 	incf	AK_PUSH,F	; increment and wrap the pointer
 	bcf	AK_PUSH,6	; "
 	movlw	0xFF		;If a key's been released, typematic repeat is
 	movwf	PK_RPT		; not a concern anymore
 	bsf	AU_FLAG,AU_SRKB	;Set flag so ADB keyboard requests service
 	retlw	low PKFsaStart	;Wait for the next byte
-PKFF02	movf	AK_PUSH,W	;The ADB keycode for F7 is 0x62, or 0xE2 with
+PKFF02:	movf	AK_PUSH,W	;The ADB keycode for F7 is 0x62, or 0xE2 with
 	movwf	FSR0L		; its MSB set for a release code, so load that
 	movlw	0xE2		; to push on top of the keyboard queue and
 	bra	PKFF01		; continue above
-PKFF03	movf	AK_PUSH,W	;The ADB keycode for Num Lock/Clear is 0x47,
+PKFF03:	movf	AK_PUSH,W	;The ADB keycode for Num Lock/Clear is 0x47,
 	movwf	FSR0L		; but if the nonexistent special control key
 	movlw	0xC7		; was pressed, this is a release of Pause/F15
 	btfsc	PU_FLAG,PU_SCTL	; instead so load the correct byte to push on
@@ -1074,20 +1064,20 @@ PKFF03	movf	AK_PUSH,W	;The ADB keycode for Num Lock/Clear is 0x47,
 	bcf	PU_FLAG,PU_SCTL	; the nonexistent special control key, and
 	bra	PKFF01		; continue above
 
-PKFsaE0F0
+PKFsaE0F0:
 	btfsc	PP_BUF,7	;If the MSB of the byte is set, just ignore it
 	bra	PKFsaStart	; "
 	movf	AK_PUSH,W	;Load the push point of the ADB keyboard queue
 	movwf	FSR0L		; into FSR0
 	movf	PP_BUF,W	;Convert the keycode from PS/2 to ADB (setting
-	iorlw	B'10000000'	; the MSB so it looks at the upper half of the
+	iorlw	10000000B	; the MSB so it looks at the upper half of the
 	movlp	high PKLut	; LUT)
 	callw			; "
 	incf	WREG,W		;If it's 0xFF, it's invalid, so ignore it
-	btfsc	STATUS,Z	; "
+	btfsc	STATUS,STATUS_Z_POSN	; "
 	retlw	low PKFsaStart	; "
 	decf	WREG,W		; "
-	iorlw	B'10000000'	;Set its MSB before pushing it onto the ADB
+	iorlw	10000000B	;Set its MSB before pushing it onto the ADB
 	movwf	INDF0		; keyboard queue to indicate a released key,
 	incf	AK_PUSH,F	; increment and wrap the pointer
 	bcf	AK_PUSH,6	; "
@@ -1096,30 +1086,30 @@ PKFsaE0F0
 	bsf	AU_FLAG,AU_SRKB	;Set flag so ADB keyboard requests service
 	retlw	low PKFsaStart	;Wait for the next byte
 
-PKFsaE1F0
+PKFsaE1F0:
 	retlw	low PKFsaStart	;Wait for the next byte, we don't care
 
-PKFsaAppsE0
+PKFsaAppsE0:
 	movf	PP_BUF,W	;If the incoming byte is 0xF0, this signals the
 	addlw	-240		; release of an extended key, maybe apps, so
-	btfsc	STATUS,Z	; transition accordingly, otherwise return to
+	btfsc	STATUS,STATUS_Z_POSN	; transition accordingly, otherwise return to
 	retlw	low PKFsaAppE0F0; get the next keycode
 	retlw	low PKFsaStart	; "
 
-PKFsaAppsE1
+PKFsaAppsE1:
 	movf	PP_BUF,W	;If the incoming byte is 0xF0, this signals the
 	xorlw	0xF0		; release of an 0xE1-escaped key, so transition
-	btfsc	STATUS,Z	; accordingly and wait for the escaped keycode
+	btfsc	STATUS,STATUS_Z_POSN	; accordingly and wait for the escaped keycode
 	retlw	low PKFsaAppE1F0; being released
 	xorlw	0xE4		;If the incoming byte is 0x14, this signals the
-	btfsc	STATUS,Z	; press of the nonexistent special control key
+	btfsc	STATUS,STATUS_Z_POSN	; press of the nonexistent special control key
 	bsf	PU_FLAG,PU_SCTL	; used in the pressing of the Pause (F15) key
 	retlw	low PKFsaStart	;Wait for the next byte
 
-PKFsaAppsF0
+PKFsaAppsF0:
 	movf	PP_BUF,W	;If the released key is anything but the Clear/
 	xorlw	0x77		; Num Lock key, we don't care
-	btfss	STATUS,Z	; "
+	btfss	STATUS,STATUS_Z_POSN	; "
 	retlw	low PKFsaStart	; "
 	btfss	PU_FLAG,PU_SCTL	;If the nonexistent special control key wasn't
 	retlw	low PKFsaStart	; pressed, we don't care
@@ -1133,20 +1123,21 @@ PKFsaAppsF0
 	bsf	AU_FLAG,AU_SRKB	;Set flag so ADB keyboard requests service
 	retlw	low PKFsaStart	;Wait for the next byte
 
-PKFsaAppE0F0
+PKFsaAppE0F0:
 	movf	PP_BUF,W	;If the key being released is the apps key,
 	addlw	-47		; clear the relevant flag, else do nothing
-	btfsc	STATUS,Z	; "
+	btfsc	STATUS,STATUS_Z_POSN	; "
 	bcf	PU_FLAG,PU_APPS	; "
 	retlw	low PKFsaStart	; "
 
-PKFsaAppE1F0
+PKFsaAppE1F0:
 	retlw	low PKFsaStart	;Wait for the next byte, we don't care
 
+psect PMFsa, class=CODE, abs, delta=2
+ORG 0xA00
+PMFsa:	
 
-PMFsa	org	0xA00
-
-PMFsaStart
+PMFsaStart:
 	btfss	PU_FLAG,PU_MSIN	;If the mouse hasn't been initialized yet, this
 	bra	PMFsaS0		; might be the device saying it's ready for it
 	movf	PP_BUF,W	;First byte in a mouse packet contains the MSBs
@@ -1162,8 +1153,8 @@ PMFsaStart
 	bcf	AM_BTN,AMB_2S	; "
 	bcf	AM_BTN,AMB_2A	; "
 	retlw	low PMFsaX	; "
-PMFsaS0	movf	PP_BUF,W	;If the byte we just got is the mouse device ID
-	btfss	STATUS,Z	; byte, 0x00, then continue, else wait for the
+PMFsaS0:	movf	PP_BUF,W	;If the byte we just got is the mouse device ID
+	btfss	STATUS,STATUS_Z_POSN	; byte, 0x00, then continue, else wait for the
 	retlw	low PMFsaStart	; next byte
 	movlw	0xF4		;Load an 0xF4 byte to tell the mouse to begin
 	movwf	PP_BUF		; to send us data packets
@@ -1176,46 +1167,47 @@ PMFsaS0	movf	PP_BUF,W	;If the byte we just got is the mouse device ID
 	bsf	PU_FLAG,PU_TXME	; and want to be notified when it's finished
 	retlw	low PMFsaSent	;Transition and wait for byte to finish sending
 
-PMFsaSent
+PMFsaSent:
 	bcf	PU_FLAG,PU_TXME	;Byte sent, we no longer want to be notified
 	retlw	low PMFsaAck	; for TX done events, wait for acknowledge byte
 
-PMFsaAck
+PMFsaAck:
 	movf	PP_BUF,W	;If the byte we just got is an 0xFA acknowledge
 	xorlw	0xFA		; byte, set the flag that the mouse is now
-	btfsc	STATUS,Z	; initialized, so start accepting its packets
+	btfsc	STATUS,STATUS_Z_POSN	; initialized, so start accepting its packets
 	bsf	PU_FLAG,PU_MSIN	; and stop waiting for the ID byte
 	retlw	low PMFsaStart	; "
 
-PMFsaX
+PMFsaX:
 	lslf	PP_BUF,W	;Double and sign-extend the X delta value while
 	rlf	PP_BUF,F	; getting its MSB from the first byte of the
 	addwf	AM_DXL,F	; packet and add it to the ADB mouse's X delta
 	movlw	0		; "
 	btfsc	PP_BUF,0	; "
-	iorlw	B'00000001'	; "
+	iorlw	00000001B	; "
 	btfsc	PM_TEMP,4	; "
-	iorlw	B'11111110'	; "
+	iorlw	11111110B	; "
 	addwfc	AM_DXH,F	; "
 	retlw	low PMFsaY	;Transition to wait for the Y delta
 
-PMFsaY
+PMFsaY:
 	lslf	PP_BUF,W	;Double and sign-extend the Y delta value while
 	rlf	PP_BUF,F	; getting its MSB from the first byte of the
 	subwf	AM_DYL,F	; packet and subtract it from the ADB mouse's Y
 	movlw	0		; delta; we do this because on a PS/2 mouse,
 	btfsc	PP_BUF,0	; a positive Y delta means up, whereas on an
-	iorlw	B'00000001'	; ADB mouse, it means down
+	iorlw	00000001B	; ADB mouse, it means down
 	btfsc	PM_TEMP,5	; "
-	iorlw	B'11111110'	; "
+	iorlw	11111110B	; "
 	subwfb	AM_DYH,F	; "
 	bsf	AU_FLAG,AU_SRMS	;Set flag so the ADB mouse calls for service
 	retlw	low PMFsaStart	;Wait for the next byte
 
+psect Ps2Fsa, class=CODE,abs, delta=2
+ORG 0xB00
+Ps2Fsa:	
 
-Ps2Fsa	org	0xB00
-
-Ps2FsaStart
+Ps2FsaStart:
 	movlb	1		;If we're here while the clock is being pulled
 	btfss	TRISA,PP_CPIN	; low by us, it must be because we want to send
 	bra	P2FsaS0		; a byte, so skip ahead
@@ -1225,90 +1217,90 @@ Ps2FsaStart
 	btfsc	PORTA,PP_MPIN	;Judge who the clock came from based on which
 	retlw	low Ps2FsaKbBitP; data line is pulled low and resume from the
 	retlw	low Ps2FsaMsBitP; appropriate state next time clock goes low
-P2FsaS0	bsf	PIE1,TMR2IE	;Set the next timer interrupt to bring us back
+P2FsaS0:	bsf	PIE1,PIE1_TMR2IE_POSN	;Set the next timer interrupt to bring us back
 	movlb	0		; so we keep the clock low long enough to let
 	retlw	low Ps2FsaTxStrt; the keyboard/mouse know to back off
 
-Ps2FsaIgnore
+Ps2FsaIgnore:
 	retlw	low Ps2FsaIgnore;Utility state to ignore bus until timeout
 
-Ps2FsaKbBitP
-	bcf	STATUS,C	;Copy the state of the keyboard data pin into
+Ps2FsaKbBitP:
+	bcf	STATUS,STATUS_C_POSN	;Copy the state of the keyboard data pin into
 	btfsc	PORTA,PP_KPIN	; the carry bit
-	bsf	STATUS,C	; "
+	bsf	STATUS,STATUS_C_POSN	; "
 	rrf	PP_SR,F		;Rotate it into shift register from the left
-	btfsc	STATUS,C	;If we rotated a 1 out of the shift register,
+	btfsc	STATUS,STATUS_C_POSN	;If we rotated a 1 out of the shift register,
 	bra	P2FKBP0		; we've completed a byte
 	btfsc	PP_SR,7		;In this state, before the bit we just got, we
 	retlw	low Ps2FsaKbBitN; had an even number of 1 bits, so the (odd)
 	retlw	low Ps2FsaKbBitP; parity bit would be high if we ended there,
-P2FKBP0	btfsc	PP_SR,7		; but we just got a bit, so go to a state
+P2FKBP0:	btfsc	PP_SR,7		; but we just got a bit, so go to a state
 	retlw	low Ps2FsaKbParN; (either to get another data bit or to expect
 	retlw	low Ps2FsaKbParP; the parity bit) based on the bit we just got
 
-Ps2FsaMsBitP
-	bcf	STATUS,C	;(Same as Ps2FsaKbBitP but for mouse)
+Ps2FsaMsBitP:
+	bcf	STATUS,STATUS_C_POSN	;(Same as Ps2FsaKbBitP but for mouse)
 	btfsc	PORTA,PP_MPIN	; "
-	bsf	STATUS,C	; "
+	bsf	STATUS,STATUS_C_POSN	; "
 	rrf	PP_SR,F		; "
-	btfsc	STATUS,C	; "
+	btfsc	STATUS,STATUS_C_POSN	; "
 	bra	P2FMBP0		; "
 	btfsc	PP_SR,7		; "
 	retlw	low Ps2FsaMsBitN; "
 	retlw	low Ps2FsaMsBitP; "
-P2FMBP0	btfsc	PP_SR,7		; "
+P2FMBP0:	btfsc	PP_SR,7		; "
 	retlw	low Ps2FsaMsParN; "
 	retlw	low Ps2FsaMsParP; "
 
-Ps2FsaKbBitN
-	bcf	STATUS,C	;(Same as Ps2FsaKbBitP but with an odd number
+Ps2FsaKbBitN:
+	bcf	STATUS,STATUS_C_POSN	;(Same as Ps2FsaKbBitP but with an odd number
 	btfsc	PORTA,PP_KPIN	; of 1 bits prior to bit just received)
-	bsf	STATUS,C	; "
+	bsf	STATUS,STATUS_C_POSN	; "
 	rrf	PP_SR,F		; "
-	btfsc	STATUS,C	; "
+	btfsc	STATUS,STATUS_C_POSN	; "
 	bra	P2FKBN0		; "
 	btfsc	PP_SR,7		; "
 	retlw	low Ps2FsaKbBitP; "
 	retlw	low Ps2FsaKbBitN; "
-P2FKBN0	btfsc	PP_SR,7		; "
+P2FKBN0:	btfsc	PP_SR,7		; "
 	retlw	low Ps2FsaKbParP; "
 	retlw	low Ps2FsaKbParN; "
 
-Ps2FsaMsBitN
-	bcf	STATUS,C	;(Same as Ps2FsaKbBitN but for mouse)
+Ps2FsaMsBitN:
+	bcf	STATUS,STATUS_C_POSN	;(Same as Ps2FsaKbBitN but for mouse)
 	btfsc	PORTA,PP_MPIN	; "
-	bsf	STATUS,C	; "
+	bsf	STATUS,STATUS_C_POSN	; "
 	rrf	PP_SR,F		; "
-	btfsc	STATUS,C	; "
+	btfsc	STATUS,STATUS_C_POSN	; "
 	bra	P2FMBN0		; "
 	btfsc	PP_SR,7		; "
 	retlw	low Ps2FsaMsBitP; "
 	retlw	low Ps2FsaMsBitN; "
-P2FMBN0	btfsc	PP_SR,7		; "
+P2FMBN0:	btfsc	PP_SR,7		; "
 	retlw	low Ps2FsaMsParP; "
 	retlw	low Ps2FsaMsParN; "
 
-Ps2FsaKbParP
+Ps2FsaKbParP:
 	btfsc	PORTA,PP_KPIN	;We expect a 1 parity bit, so go on to expect
 	retlw	low Ps2FsaKbStop; the stop bit if we got it, or ignore this
 	retlw	low Ps2FsaIgnore; transaction if we didn't
 
-Ps2FsaMsParP
+Ps2FsaMsParP:
 	btfsc	PORTA,PP_MPIN	;(Same as Ps2FsaKbParP but for mouse)
 	retlw	low Ps2FsaMsStop; "
 	retlw	low Ps2FsaIgnore; "
 
-Ps2FsaKbParN
+Ps2FsaKbParN:
 	btfss	PORTA,PP_KPIN	;(Same as Ps2FsaKbParP but expecting a 0 parity
 	retlw	low Ps2FsaKbStop; bit)
 	retlw	low Ps2FsaIgnore; "
 
-Ps2FsaMsParN
+Ps2FsaMsParN:
 	btfss	PORTA,PP_MPIN	;(Same as Ps2FsaKbParN but for mouse)
 	retlw	low Ps2FsaMsStop; "
 	retlw	low Ps2FsaIgnore; "
 
-Ps2FsaKbStop
+Ps2FsaKbStop:
 	btfss	PORTA,PP_KPIN	;We expect the stop bit to be 1, so go on if we
 	retlw	low Ps2FsaIgnore; get it, ignore this transaction if we don't
 	movf	PP_SR,W		;Move the filled shift register's contents into
@@ -1316,7 +1308,7 @@ Ps2FsaKbStop
 	bsf	PP_FLAG,PP_RXKI	;Set flag that we've received a keyboard byte
 	retlw	low Ps2FsaStart	;Return to expect the next byte
 
-Ps2FsaMsStop
+Ps2FsaMsStop:
 	btfss	PORTA,PP_MPIN	;(Same as Ps2FsaKbStop but for mouse)
 	retlw	low Ps2FsaIgnore; "
 	movf	PP_SR,W		; "
@@ -1324,7 +1316,7 @@ Ps2FsaMsStop
 	bsf	PP_FLAG,PP_RXMI	; "
 	retlw	low Ps2FsaStart	; "
 
-Ps2FsaTxStrt
+Ps2FsaTxStrt:
 	movlb	1		;Pull the appropriate data line low for the
 	btfsc	PP_FLAG,PP_TXKI	; peripheral that we want to send a byte to
 	bcf	TRISA,PP_KPIN	; "
@@ -1338,219 +1330,220 @@ Ps2FsaTxStrt
 	retlw	low Ps2FsaTxMsSt; "
 	retlw	low Ps2FsaStart	; "
 
-Ps2FsaTxKbSt
+Ps2FsaTxKbSt:
 	movf	PP_BUF,W	;Load the shift register from the buffer
 	movwf	PP_SR		; "
-	bsf	STATUS,C	;Rotate the LSB out of the right, rotating a 1
+	bsf	STATUS,STATUS_C_POSN	;Rotate the LSB out of the right, rotating a 1
 	rrf	PP_SR,F		; into the MSB
 	movlb	1		;Pull the data line low if the bit we rotated
-	btfss	STATUS,C	; out is a 0, release it for a 1
+	btfss	STATUS,STATUS_C_POSN	; out is a 0, release it for a 1
 	bcf	TRISA,PP_KPIN	; "
-	btfsc	STATUS,C	; "
+	btfsc	STATUS,STATUS_C_POSN	; "
 	bsf	TRISA,PP_KPIN	; "
 	movlb	0		;If the bit we just sent was a 1, that gives us
-	btfsc	STATUS,C	; an odd number of 1 bits, so our current (odd)
+	btfsc	STATUS,STATUS_C_POSN	; an odd number of 1 bits, so our current (odd)
 	retlw	Ps2FsaTxKbBN	; parity bit is a 0, likewise it's 1 if we just
 	retlw	Ps2FsaTxKbBP	; sent a 0; transition to the appropriate state
 
-Ps2FsaTxKbBN
+Ps2FsaTxKbBN:
 	lsrf	PP_SR,F		;Rotate the next bit out the right of the shift
 	movlb	1		; register
-	btfsc	STATUS,Z	;If we just shifted out the placeholder bit,
+	btfsc	STATUS,STATUS_Z_POSN	;If we just shifted out the placeholder bit,
 	bcf	TRISA,PP_KPIN	; pull the line low to send our 0 parity bit
 	movlb	0		; and get ready to send our stop bit
-	btfsc	STATUS,Z	; "
+	btfsc	STATUS,STATUS_Z_POSN	; "
 	retlw	low Ps2FsaTxKbSp; "
 	movlb	1		;Pull the data line low if we shifted out a 0,
-	btfss	STATUS,C	; release it if we shifted out a 1
+	btfss	STATUS,STATUS_C_POSN	; release it if we shifted out a 1
 	bcf	TRISA,PP_KPIN	; "
-	btfsc	STATUS,C	; "
+	btfsc	STATUS,STATUS_C_POSN	; "
 	bsf	TRISA,PP_KPIN	; "
 	movlb	0		;If the bit we just sent was a 1, that gives us
-	btfsc	STATUS,C	; an even number of 1 bits, so our current
+	btfsc	STATUS,STATUS_C_POSN	; an even number of 1 bits, so our current
 	retlw	Ps2FsaTxKbBP	; parity bit is a 1, likewise it's 0 if we just
 	retlw	Ps2FsaTxKbBN	; sent a 0; transition to the appropriate state
 
-Ps2FsaTxKbBP
+Ps2FsaTxKbBP:
 	lsrf	PP_SR,F		;(Same as Ps2FsaTxKbBP but current parity bit
 	movlb	1		; is inverted)
-	btfsc	STATUS,Z	; "
+	btfsc	STATUS,STATUS_Z_POSN	; "
 	bsf	TRISA,PP_KPIN	; "
 	movlb	0		; "
-	btfsc	STATUS,Z	; "
+	btfsc	STATUS,STATUS_Z_POSN	; "
 	retlw	low Ps2FsaTxKbSp; "
 	movlb	1		; "
-	btfss	STATUS,C	; "
+	btfss	STATUS,STATUS_C_POSN	; "
 	bcf	TRISA,PP_KPIN	; "
-	btfsc	STATUS,C	; "
+	btfsc	STATUS,STATUS_C_POSN	; "
 	bsf	TRISA,PP_KPIN	; "
 	movlb	0		; "
-	btfsc	STATUS,C	; "
+	btfsc	STATUS,STATUS_C_POSN	; "
 	retlw	Ps2FsaTxKbBN	; "
 	retlw	Ps2FsaTxKbBP	; "
 
-Ps2FsaTxKbSp
+Ps2FsaTxKbSp:
 	movlb	1		;Release the data line to send our stop bit
 	bsf	TRISA,PP_KPIN	; "
 	movlb	0		; "
 	retlw	low Ps2FsaTxKbAc;Transition to wait for the acknowledge bit
 
-Ps2FsaTxKbAc
+Ps2FsaTxKbAc:
 	btfsc	PORTA,PP_KPIN	;If the data line is pulled low, the peripheral
 	retlw	low Ps2FsaIgnore; acknowledged the byte we just sent, so wait
 	bcf	PP_FLAG,PP_TXKI	; for the next, else ignore this transaction
 	retlw	low Ps2FsaStart	; "
 
-Ps2FsaTxMsSt
+Ps2FsaTxMsSt:
 	movf	PP_BUF,W	;(Same as Ps2FsaTxKbSt but for mouse)
 	movwf	PP_SR		; "
-	bsf	STATUS,C	; "
+	bsf	STATUS,STATUS_C_POSN	; "
 	rrf	PP_SR,F		; "
 	movlb	1		; "
-	btfss	STATUS,C	; "
+	btfss	STATUS,STATUS_C_POSN	; "
 	bcf	TRISA,PP_MPIN	; "
-	btfsc	STATUS,C	; "
+	btfsc	STATUS,STATUS_C_POSN	; "
 	bsf	TRISA,PP_MPIN	; "
 	movlb	0		; "
-	btfsc	STATUS,C	; "
+	btfsc	STATUS,STATUS_C_POSN	; "
 	retlw	Ps2FsaTxMsBN	; "
 	retlw	Ps2FsaTxMsBP	; "
 
-Ps2FsaTxMsBN
+Ps2FsaTxMsBN:
 	lsrf	PP_SR,F		;(Same as Ps2FsaTxKbBN but for mouse)
 	movlb	1		; "
-	btfsc	STATUS,Z	; "
+	btfsc	STATUS,STATUS_Z_POSN	; "
 	bcf	TRISA,PP_MPIN	; "
 	movlb	0		; "
-	btfsc	STATUS,Z	; "
+	btfsc	STATUS,STATUS_Z_POSN	; "
 	retlw	low Ps2FsaTxMsSp; "
 	movlb	1		; "
-	btfss	STATUS,C	; "
+	btfss	STATUS,STATUS_C_POSN	; "
 	bcf	TRISA,PP_MPIN	; "
-	btfsc	STATUS,C	; "
+	btfsc	STATUS,STATUS_C_POSN	; "
 	bsf	TRISA,PP_MPIN	; "
 	movlb	0		; "
-	btfsc	STATUS,C	; "
+	btfsc	STATUS,STATUS_C_POSN	; "
 	retlw	Ps2FsaTxMsBP	; "
 	retlw	Ps2FsaTxMsBN	; "
 
-Ps2FsaTxMsBP
+Ps2FsaTxMsBP:
 	lsrf	PP_SR,F		;(Same as Ps2FsaTxKbBP but for mouse)
 	movlb	1		; "
-	btfsc	STATUS,Z	; "
+	btfsc	STATUS,STATUS_Z_POSN	; "
 	bsf	TRISA,PP_MPIN	; "
 	movlb	0		; "
-	btfsc	STATUS,Z	; "
+	btfsc	STATUS,STATUS_Z_POSN	; "
 	retlw	low Ps2FsaTxMsSp; "
 	movlb	1		; "
-	btfss	STATUS,C	; "
+	btfss	STATUS,STATUS_C_POSN	; "
 	bcf	TRISA,PP_MPIN	; "
-	btfsc	STATUS,C	; "
+	btfsc	STATUS,STATUS_C_POSN	; "
 	bsf	TRISA,PP_MPIN	; "
 	movlb	0		; "
-	btfsc	STATUS,C	; "
+	btfsc	STATUS,STATUS_C_POSN	; "
 	retlw	Ps2FsaTxMsBN	; "
 	retlw	Ps2FsaTxMsBP	; "
 
-Ps2FsaTxMsSp
+Ps2FsaTxMsSp:
 	movlb	1		;(Same as Ps2FsaTxKbSp but for mouse)
 	bsf	TRISA,PP_MPIN	; "
 	movlb	0		; "
 	retlw	low Ps2FsaTxMsAc; "
 
-Ps2FsaTxMsAc
+Ps2FsaTxMsAc:
 	btfsc	PORTA,PP_MPIN	;(Same as Ps2FsaTxKbAc but for mouse)
 	retlw	low Ps2FsaIgnore; "
 	bcf	PP_FLAG,PP_TXMI	; "
 	retlw	low Ps2FsaStart	; "
 
+psect AKFsa, class=CODE,abs, delta=2
+ORG 0xC00
+AKFsa:
 
-AKFsa	org	0xC00
-
-AKFsaCommand
+AKFsaCommand:
 	btfsc	AP_BUF,2	;Talk is the only command that sets bit 2
 	bra	AKFsaTalk	; "
 	btfsc	AP_BUF,3	;Only talk and listen set bit 3, so if it's not
 	bra	AKFsaListen	; talk, it's listen
 	retlw	low AKFsaIgnore	;Ignore flush
 
-AKFsaIgnore
+AKFsaIgnore:
 	retlw	low AKFsaIgnore	;Utility state to ignore until next command
 
-AKFsaListen
+AKFsaListen:
 	btfss	AP_BUF,1	;Keyboard only responds to listens on registers
 	retlw	low AKFsaIgnore	; 2 and 3
 	btfss	AP_BUF,0	;Go to the appropriate state and wait for a
 	retlw	low AKFsaLstn2H	; data byte
 	retlw	low AKFsaLstn3H	; "
 
-AKFsaLstn2H
+AKFsaLstn2H:
 	retlw	low AKFsaLstn2L	;Keyboard listen 2 only has effect on low byte
 
-AKFsaLstn2L
+AKFsaLstn2L:
 	;TODO mechanism to signal something that LEDs have changed?
-	movlw	B'11111000'	;Accept the state of the keyboard LEDs from the
+	movlw	11111000B	;Accept the state of the keyboard LEDs from the
 	andwf	AK_R2L,F	; listen command but ignore all other bits
-	movlw	B'00000111'	; "
+	movlw	00000111B	; "
 	andwf	AP_BUF,W	; "
 	iorwf	AK_R2L,F	; "
 	retlw	low AKFsaIgnore	; "
 
-AKFsaLstn3H
+AKFsaLstn3H:
 	movf	AP_BUF,W	;We can't act on the high byte until we know
 	movwf	AU_TEMP		; what the low byte (handler ID) is, so store
 	retlw	low AKFsaLstn3L	; it in temporary space
 
-AKFsaLstn3L
+AKFsaLstn3L:
 	movf	AP_BUF,W	;If handler ID is 0x00, it means to change the
-	btfsc	STATUS,Z	; device's address and SRQ enable bit
+	btfsc	STATUS,STATUS_Z_POSN	; device's address and SRQ enable bit
 	bra	AKFL3L1		; unconditionally
 	addlw	2		;If handler ID is 0xFE, it means to change the
-	btfsc	STATUS,Z	; device's address if a collision hasn't been
+	btfsc	STATUS,STATUS_Z_POSN	; device's address if a collision hasn't been
 	bra	AKFL3L0		; detected
 	addlw	-4		;If handler ID is not 0x02/0x03, ignore this
-	andlw	B'11111110'	; command, we don't understand any other
-	btfss	STATUS,Z	; handlers
+	andlw	11111110B	; command, we don't understand any other
+	btfss	STATUS,STATUS_Z_POSN	; handlers
 	retlw	low AKFsaIgnore	; "
 	movf	AP_BUF,W	;If handler ID is 0x02/0x03, accept it as our
 	movwf	AK_R3L		; new handler ID, because we as an extended
 	retlw	low AKFsaIgnore	; keyboard understand those
-AKFL3L0	btfss	AK_R3H,7	;If a collision has not been detected, skip
+AKFL3L0:	btfss	AK_R3H,7	;If a collision has not been detected, skip
 	bra	AKFL3L2		; ahead to change the address; if one has been
 	bcf	AK_R3H,7	; detected, clear it and ignore this command
 	retlw	low AKFsaIgnore	; "
-AKFL3L1	bcf	AU_FLAG,AU_SEKB	;Copy the state of the SRQ enable bit to the SRQ
+AKFL3L1:	bcf	AU_FLAG,AU_SEKB	;Copy the state of the SRQ enable bit to the SRQ
 	bcf	AK_R3H,5	; enable flag and to our copy of register 3
 	btfsc	AU_TEMP,5	; "
 	bsf	AU_FLAG,AU_SEKB	; "
 	btfsc	AU_TEMP,5	; "
 	bsf	AK_R3H,5	; "
-AKFL3L2	movlw	B'00001111'	;Accept the low four bits of the first received
+AKFL3L2:	movlw	00001111B	;Accept the low four bits of the first received
 	andwf	AU_TEMP,F	; byte as our new address and we're done
 	movf	AK_R3H,W	; "
-	andlw	B'11110000'	; "
+	andlw	11110000B	; "
 	iorwf	AU_TEMP,W	; "
 	movwf	AK_R3H		; "
 	retlw	low AKFsaIgnore	; "
 
-AKFsaTalk
+AKFsaTalk:
 	movf	AP_BUF,W	;Branch to the appropriate handler for the
-	andlw	B'00000011'	; register (0, 2, or 3) being ordered to talk;
-	btfsc	STATUS,Z	; if it's 1, we have no register 1, so ignore
+	andlw	00000011B	; register (0, 2, or 3) being ordered to talk;
+	btfsc	STATUS,STATUS_Z_POSN	; if it's 1, we have no register 1, so ignore
 	bra	AKFsaTalk0H	; "
 	addlw	-2		; "
-	btfsc	STATUS,Z	; "
+	btfsc	STATUS,STATUS_Z_POSN	; "
 	bra	AKFsaTalk2H	; "
 	addlw	-1		; "
-	btfsc	STATUS,Z	; "
+	btfsc	STATUS,STATUS_Z_POSN	; "
 	bra	AKFsaTalk3H	; "
 	retlw	low AKFsaIgnore	; "
 
-AKFsaTalk0H
+AKFsaTalk0H:
 	bcf	AU_FLAG,AU_SRKB	;Clear the SRQ flag, will re-set it if need be
 	movf	AK_PUSH,W	;If the pop pointer is equal to the push
 	xorwf	AK_POP,W	; pointer, we have no data to return, so ignore
-	btfsc	STATUS,Z	; the command
+	btfsc	STATUS,STATUS_Z_POSN	; the command
 	retlw	low AKFsaIgnore	; "
 	movf	AK_POP,W	;Get the first byte off the queue; we don't yet
 	movwf	FSR0L		; increment the pop pointer here because it's
@@ -1562,50 +1555,50 @@ AKFsaTalk0H
 	bsf	AU_FLAG,AU_TXON	; and we are interested in transmission events
 	retlw	low AKFsaTalk0L	;Deal with what happened in the next state
 
-AKFsaTalk0L
+AKFsaTalk0L:
 	bsf	AU_FLAG,AU_SRKB	;Set SRQ flag - if we're here, we have data
 	btfss	AP_FLAG,AP_COL	;If there was a collision, set the collision
 	bra	AKFT0L0		; bit of register 3, clear the transmit events
 	bsf	AK_R3H,7	; flag and we're done until we get another
 	bcf	AU_FLAG,AU_TXON ; command
 	retlw	low AKFsaIgnore	; "
-AKFT0L0	movf	AP_BUF,W	;If the byte on top of the queue is an 0x7F or
-	andlw	B'01111111'	; an 0xFF, i.e. the power key, we have to send
+AKFT0L0:	movf	AP_BUF,W	;If the byte on top of the queue is an 0x7F or
+	andlw	01111111B	; an 0xFF, i.e. the power key, we have to send
 	xorlw	0x7F		; it twice, so skip ahead
-	btfsc	STATUS,Z	; "
+	btfsc	STATUS,STATUS_Z_POSN	; "
 	bra	AKFT0L3		; "
 	incf	AK_POP,W	;If there's only one event on the queue, load
-	andlw	B'10111111'	; 0xFF as the second byte for transmission
+	andlw	10111111B	; 0xFF as the second byte for transmission
 	xorwf	AK_PUSH,W	; "
-	btfsc	STATUS,Z	; "
+	btfsc	STATUS,STATUS_Z_POSN	; "
 	movlw	0xFF		; "
-	btfsc	STATUS,Z	; "
+	btfsc	STATUS,STATUS_Z_POSN	; "
 	bra	AKFT0L2		; "
 	xorwf	AK_PUSH,W	;Get the second byte off the queue
 	movwf	FSR0L		; "
 	movf	INDF0,W		; "
 	btfss	AK_R3L,0	;If we're handler 2, change the keycodes for
 	call	AKSquashMods	; right shift/ctrl/option to the left ones
-AKFT0L2	movwf	AP_BUF		;Load keycode into the buffer
-AKFT0L3	bsf	AP_FLAG,AP_TXI	;Set the flags to say we have a byte to send
+AKFT0L2:	movwf	AP_BUF		;Load keycode into the buffer
+AKFT0L3:	bsf	AP_FLAG,AP_TXI	;Set the flags to say we have a byte to send
 	bcf	AU_FLAG,AU_TXON	; and that we no longer want transmit events
 	retlw	low AKFsaTalk0E	;Deal with what happened in the next state
 
-AKFsaTalk0E
+AKFsaTalk0E:
 	btfss	AP_FLAG,AP_COL	;If there was a collision, set the collision
 	bra	AKFT0E0		; bit of register 3 and we're done until we get
 	bsf	AK_R3H,7	; another command
 	retlw	low AKFsaIgnore	; "
-AKFT0E0	movf	AK_POP,W	;Transmission successful, so update register 2
+AKFT0E0:	movf	AK_POP,W	;Transmission successful, so update register 2
 	movwf	FSR0L		; based on the first keycode sent and advance
 	movf	INDF0,W		; the pop pointer
 	call	AKUpdateR2	; "
 	incf	AK_POP,F	; "
 	bcf	AK_POP,6	; "
 	movf	AP_BUF,W	;If the last byte we sent was 0x7F or 0xFF,
-	andlw	B'01111111'	; we sent only one keycode
-	xorlw	B'01111111'	; "
-	btfsc	STATUS,Z	; "
+	andlw	01111111B	; we sent only one keycode
+	xorlw	01111111B	; "
+	btfsc	STATUS,STATUS_Z_POSN	; "
 	bra	AKFT0E1		; "
 	movf	AK_POP,W	;If we sent a second keycode, update register 2
 	movwf	FSR0L		; based on that one too and advance the pop
@@ -1613,89 +1606,89 @@ AKFT0E0	movf	AK_POP,W	;Transmission successful, so update register 2
 	call	AKUpdateR2	; "
 	incf	AK_POP,F	; "
 	bcf	AK_POP,6	; "
-AKFT0E1	movf	AK_POP,W	;If the pop pointer has caught up with the push
+AKFT0E1:	movf	AK_POP,W	;If the pop pointer has caught up with the push
 	xorwf	AK_PUSH,W	; pointer, we no longer need service so clear
-	btfsc	STATUS,Z	; our SRQ flag
+	btfsc	STATUS,STATUS_Z_POSN	; our SRQ flag
 	bcf	AU_FLAG,AU_SRKB	; "
 	retlw	low AKFsaIgnore	;And we're done
 
-AKFsaTalk2H
+AKFsaTalk2H:
 	movf	AK_R2H,W	;Load the high byte of register 2 for transmit
 	movwf	AP_BUF		; "
 	bsf	AP_FLAG,AP_TXI	;Set the flags to say we have a byte to send
 	bsf	AU_FLAG,AU_TXON	; and we are interested in transmission events
 	retlw	low AKFsaTalk2L	;Deal with what happened in the next state
 
-AKFsaTalk2L
+AKFsaTalk2L:
 	btfss	AP_FLAG,AP_COL	;If there was a collision, set the collision
 	bra	AKFT2L0		; bit of register 3, clear the transmit events
 	bsf	AK_R3H,7	; flag and we're done until we get another
 	bcf	AU_FLAG,AU_TXON	; command
 	retlw	low AKFsaIgnore	; "
-AKFT2L0	movf	AK_R2L,W	;Load the low byte of register 2 for transmit
+AKFT2L0:	movf	AK_R2L,W	;Load the low byte of register 2 for transmit
 	movwf	AP_BUF		; "
 	bsf	AP_FLAG,AP_TXI	;Set the flags to say we have a byte to send
 	bcf	AU_FLAG,AU_TXON	; and that we no longer want transmit events
 	retlw	low AKFsaTalk23E;Deal with what happened in the next state
 
-AKFsaTalk3H
+AKFsaTalk3H:
 	movf	AK_R3H,W	;Load the high byte of register 3 for transmit,
-	andlw	B'01110000'	; clearing the MSB (which we use as a collision
+	andlw	01110000B	; clearing the MSB (which we use as a collision
 	movwf	AP_BUF		; flag) and the address
 	movlb	0		;Get a pseudorandom four-bit number and put it
 	movf	TMR1H,W		; into the low nibble of the buffer; this way
 	xorwf	TMR1L,W		; we replace address (which the host already
-	andlw	B'00001111'	; knows) with a random number, which helps with
+	andlw	00001111B	; knows) with a random number, which helps with
 	iorwf	AP_BUF,F	; collision detection
 	movlb	2		; "
 	bsf	AP_FLAG,AP_TXI	;Set the flags to say we have a byte to send
 	bsf	AU_FLAG,AU_TXON	; and we are interested in transmission events
 	retlw	low AKFsaTalk3L	;Deal with what happened in the next state
 
-AKFsaTalk3L
+AKFsaTalk3L:
 	btfss	AP_FLAG,AP_COL	;If there was a collision, set the collision
 	bra	AKFT3L0		; bit of register 3, clear the transmit events
 	bsf	AK_R3H,7	; flag and we're done until we get another
 	bcf	AU_FLAG,AU_TXON	; command
 	retlw	low AKFsaIgnore	; "
-AKFT3L0	movf	AK_R3L,W	;Load the low byte of register 3 for transmit
+AKFT3L0:	movf	AK_R3L,W	;Load the low byte of register 3 for transmit
 	movwf	AP_BUF		; "
 	bsf	AP_FLAG,AP_TXI	;Set the flags to say we have a byte to send
 	bcf	AU_FLAG,AU_TXON	; and that we no longer want transmit events
 	retlw	low AKFsaTalk23E;Deal with what happened in the next state
 
-AKFsaTalk23E
+AKFsaTalk23E:
 	btfsc	AP_FLAG,AP_COL	;If there was a collision, set the collision
 	bsf	AK_R3H,7	; bit of register 3
 	retlw	low AKFsaIgnore	;Either way, we're done
 
-AKSquashMods
+AKSquashMods:
 	addlw	-123		;Change 0x7B (release right shift) to 0x38
-	btfsc	STATUS,Z	; (release shift)
+	btfsc	STATUS,STATUS_Z_POSN	; (release shift)
 	retlw	0x38		; "
 	addlw	-1		;Change 0x7C (release right option) to 0x3A
-	btfsc	STATUS,Z	; (release option)
+	btfsc	STATUS,STATUS_Z_POSN	; (release option)
 	retlw	0x3A		; "
 	addlw	-1		;Change 0x7D (release right control) to 0x36
-	btfsc	STATUS,Z	; (release control)
+	btfsc	STATUS,STATUS_Z_POSN	; (release control)
 	retlw	0x36		; "
 	addlw	-126		;Change 0xFB (press right shift) to 0xB8 (press
-	btfsc	STATUS,Z	; shift)
+	btfsc	STATUS,STATUS_Z_POSN	; shift)
 	retlw	0xB8		; "
 	addlw	-1		;Change 0xFC (press right option) to 0xBA
-	btfsc	STATUS,Z	; (press option)
+	btfsc	STATUS,STATUS_Z_POSN	; (press option)
 	retlw	0xBA		; "
 	addlw	-1		;Change 0xFD (press right control) to 0xB6
-	btfsc	STATUS,Z	; (press control)
+	btfsc	STATUS,STATUS_Z_POSN	; (press control)
 	retlw	0xB6		; "
 	addlw	-3		;Otherwise, leave as is
 	return			; "
 
-AKUpdateR2
+AKUpdateR2:
 	;TODO "exceptional event" for ADB keyboards means reset was pressed
 	btfss	WREG,7		;If MSB of the key pressed is set (because the
 	bra	AKUpR20		; key is being released), snuff it to zero and
-	andlw	B'01111111'	; complement the register 2 registers before
+	andlw	01111111B	; complement the register 2 registers before
 	comf	AK_R2H,F	; and after setting them, this way we don't
 	comf	AK_R2L,F	; have to copypaste code
 	comf	AK_MOD,F	; "
@@ -1704,8 +1697,8 @@ AKUpdateR2
 	comf	AK_R2L,F	; "
 	comf	AK_MOD,F	; "
 	bra	AKUpR21		; "
-AKUpR20	call	AKUpR22		; "
-AKUpR21	bsf	AK_R2H,K2H_CTL	;If either control key is down, reflect that in
+AKUpR20:	call	AKUpR22		; "
+AKUpR21:	bsf	AK_R2H,K2H_CTL	;If either control key is down, reflect that in
 	btfsc	AK_MOD,KMD_LCT	; the appropriate bits in keyboard register 2
 	btfss	AK_MOD,KMD_RCT	; "
 	bcf	AK_R2H,K2H_CTL	; "
@@ -1718,101 +1711,102 @@ AKUpR21	bsf	AK_R2H,K2H_CTL	;If either control key is down, reflect that in
 	btfss	AK_MOD,KMD_ROP	; "
 	bcf	AK_R2H,K2H_OPT	; "
 	return
-AKUpR22	addlw	-51		;0x33 (delete/backspace)
-	btfsc	STATUS,Z
+AKUpR22:	addlw	-51		;0x33 (delete/backspace)
+	btfsc	STATUS,STATUS_Z_POSN
 	bcf	AK_R2H,K2H_DEL
 	addlw	-3		;0x36 (left control)
-	btfsc	STATUS,Z
+	btfsc	STATUS,STATUS_Z_POSN
 	bcf	AK_MOD,KMD_LCT
 	addlw	-1		;0x37 (command)
-	btfsc	STATUS,Z
+	btfsc	STATUS,STATUS_Z_POSN
 	bcf	AK_R2H,K2H_CMD
 	addlw	-1		;0x38 (left shift)
-	btfsc	STATUS,Z
+	btfsc	STATUS,STATUS_Z_POSN
 	bcf	AK_MOD,KMD_LSH
 	addlw	-1		;0x39 (caps lock)
-	btfsc	STATUS,Z
+	btfsc	STATUS,STATUS_Z_POSN
 	bcf	AK_R2H,K2H_CAP
 	addlw	-1		;0x3A (left option)
-	btfsc	STATUS,Z
+	btfsc	STATUS,STATUS_Z_POSN
 	bcf	AK_MOD,KMD_LOP
 	addlw	-13		;0x47 (clear/num lock)
-	btfsc	STATUS,Z
+	btfsc	STATUS,STATUS_Z_POSN
 	bcf	AK_R2L,K2L_CLR
 	addlw	-36		;0x6B (F14/scroll lock)
-	btfsc	STATUS,Z
+	btfsc	STATUS,STATUS_Z_POSN
 	bcf	AK_R2L,K2L_SLK
 	addlw	-16		;0x7B (right shift)
-	btfsc	STATUS,Z
+	btfsc	STATUS,STATUS_Z_POSN
 	bcf	AK_MOD,KMD_RSH
 	addlw	-1		;0x7C (right option)
-	btfsc	STATUS,Z
+	btfsc	STATUS,STATUS_Z_POSN
 	bcf	AK_MOD,KMD_ROP
 	addlw	-1		;0x7D (right control)
-	btfsc	STATUS,Z
+	btfsc	STATUS,STATUS_Z_POSN
 	bcf	AK_MOD,KMD_RCT
 	addlw	-2		;0x7F (reset)
-	btfsc	STATUS,Z
+	btfsc	STATUS,STATUS_Z_POSN
 	bcf	AK_R2H,K2H_RST
 	return
 
+psect AMFsa, class=CODE, abs, delta=2
+ORG 0xD00
+AMFsa:
 
-AMFsa	org	0xD00
-
-AMFsaCommand
+AMFsaCommand:
 	btfsc	AP_BUF,2	;Talk is the only command that sets bit 2
 	bra	AMFsaTalk	; "
 	btfsc	AP_BUF,3	;Only talk and listen set bit 3, so if it's not
 	bra	AMFsaListen	; talk, it's listen
 	retlw	low AMFsaIgnore	;Ignore flush
 
-AMFsaIgnore
+AMFsaIgnore:
 	retlw	low AMFsaIgnore	;Utility state to ignore until next command
 
-AMFsaListen
+AMFsaListen:
 	btfsc	AP_BUF,0	;Mouse only listens on register 3
 	btfss	AP_BUF,1	; "
 	retlw	low AMFsaIgnore	; "
 	retlw	low AMFsaLstn3H	; "
 
-AMFsaLstn3H
+AMFsaLstn3H:
 	movf	AP_BUF,W	;We can't act on the high byte until we know
 	movwf	AU_TEMP		; what the low byte (handler ID) is, so store
 	retlw	low AMFsaLstn3L	; it in temporary space
 
-AMFsaLstn3L
+AMFsaLstn3L:
 	movf	AP_BUF,W	;If handler ID is 0x00, it means to change the
-	btfsc	STATUS,Z	; device's address and SRQ enable bit
+	btfsc	STATUS,STATUS_Z_POSN	; device's address and SRQ enable bit
 	bra	AMFL3L1		; unconditionally
 	addlw	2		;If handler ID is 0xFE, it means to change the
-	btfsc	STATUS,Z	; device's address if a collision hasn't been
+	btfsc	STATUS,STATUS_Z_POSN	; device's address if a collision hasn't been
 	bra	AMFL3L0		; detected
 	addlw	-3		;If handler ID is not 0x01/0x02, ignore this
-	andlw	B'11111110'	; command, we don't understand any other
-	btfss	STATUS,Z	; handlers
+	andlw	11111110B	; command, we don't understand any other
+	btfss	STATUS,STATUS_Z_POSN	; handlers
 	retlw	low AMFsaIgnore	; "
 	movf	AP_BUF,W	;If handler ID is 0x01/0x02, accept it as our
 	movwf	AM_R3L		; new handler ID, because we as a 100/200 cpi
 	retlw	low AMFsaIgnore	; mouse understand those
-AMFL3L0	btfss	AM_R3H,7	;If a collision has not been detected, skip
+AMFL3L0:	btfss	AM_R3H,7	;If a collision has not been detected, skip
 	bra	AMFL3L2		; ahead to change the address; if one has been
 	bcf	AM_R3H,7	; detected, clear it and ignore this command
 	retlw	low AMFsaIgnore	; "
-AMFL3L1	bcf	AU_FLAG,AU_SEMS	;Copy the state of the SRQ enable bit to the SRQ
+AMFL3L1:	bcf	AU_FLAG,AU_SEMS	;Copy the state of the SRQ enable bit to the SRQ
 	bcf	AM_R3H,5	; enable flag and to our copy of register 3
 	btfsc	AU_TEMP,5	; "
 	bsf	AU_FLAG,AU_SEMS	; "
 	btfsc	AU_TEMP,5	; "
 	bsf	AM_R3H,5	; "
-AMFL3L2	movlw	B'00001111'	;Accept the low four bits of the first received
+AMFL3L2:	movlw	00001111B	;Accept the low four bits of the first received
 	andwf	AU_TEMP,F	; byte as our new address and we're done
 	movf	AM_R3H,W	; "
-	andlw	B'11110000'	; "
+	andlw	11110000B	; "
 	iorwf	AU_TEMP,W	; "
 	movwf	AM_R3H		; "
 	retlw	low AMFsaIgnore	; "
 
-AMFsaTalk
+AMFsaTalk:
 	lsrf	AP_BUF,W	;Mouse only responds on registers 0 and 3
 	xorwf	AP_BUF,W	; "
 	btfsc	WREG,0		; "
@@ -1821,7 +1815,7 @@ AMFsaTalk
 	bra	AMFsaTalk3H	; "
 	bra	AMFsaTalk0H	; "
 
-AMFsaTalk0H
+AMFsaTalk0H:
 	;TODO the mouse button is still sticky when the modem is active...
 	btfss	AU_FLAG,AU_SRMS	;If we have anything to say for register 0, our
 	retlw	low AMFsaIgnore	; service request flag would be set
@@ -1832,38 +1826,38 @@ AMFsaTalk0H
 	addwf	AM_DYL,F	; "
 	movlw	0xFF		; "
 	addwfc	AM_DYH,F	; "
-	btfsc	STATUS,C	;If it didn't borrow, leave the difference,
+	btfsc	STATUS,STATUS_C_POSN	;If it didn't borrow, leave the difference,
 	bra	AMFT0H0		; it's more than we can convey in one delta
-	movlw	B'00111111'	;If it borrowed, add 63 to the difference and
+	movlw	00111111B	;If it borrowed, add 63 to the difference and
 	addwf	AM_DYL,W	; that's our final delta
 	movwf	AP_BUF		; "
 	clrf	AM_DYH		; "
 	clrf	AM_DYL		; "
 	bra	AMFT0H3		; "
-AMFT0H0	movlw	B'00111111'	;If it didn't borrow, send the delta 63 and
+AMFT0H0:	movlw	00111111B	;If it didn't borrow, send the delta 63 and
 	movwf	AP_BUF		; signal that we need to be serviced again to
 	bsf	AU_FLAG,AU_SRMS	; convey the rest of it
 	bra	AMFT0H3		; "
-AMFT0H1	movlw	0x40		;If it's negative, add 64 to it
+AMFT0H1:	movlw	0x40		;If it's negative, add 64 to it
 	addwf	AM_DYL,F	; "
 	movlw	0		; "
 	addwfc	AM_DYH,F	; "
-	btfss	STATUS,C	;If it didn't overflow, leave the sum, it's
+	btfss	STATUS,STATUS_C_POSN	;If it didn't overflow, leave the sum, it's
 	bra	AMFT0H2		; more than we can convey in one delta
-	movlw	B'01000000'	;If it overflowed, add -64 to the sum and
+	movlw	01000000B	;If it overflowed, add -64 to the sum and
 	addwf	AM_DYL,W	; that's our final delta
 	movwf	AP_BUF		; "
 	clrf	AM_DYL		; "
 	bra	AMFT0H3		; "
-AMFT0H2	movlw	B'01000000'	;If it didn't overflow, send the delta -64 and
+AMFT0H2:	movlw	01000000B	;If it didn't overflow, send the delta -64 and
 	movwf	AP_BUF		; signal that we need to be serviced again to
 	bsf	AU_FLAG,AU_SRMS	; convey the rest of it
-AMFT0H3	btfsc	AM_R3L,1	;If the handler ID is 0x01, halve the delta
+AMFT0H3:	btfsc	AM_R3L,1	;If the handler ID is 0x01, halve the delta
 	bra	AMFT0H4		; value to simulate a 100 cpi mouse
 	lsrf	AP_BUF,F	; "
 	btfsc	AP_BUF,5	; "
 	bsf	AP_BUF,6	; "
-AMFT0H4	bsf	AP_BUF,7	;Copy the mouse button state, ANDing together
+AMFT0H4:	bsf	AP_BUF,7	;Copy the mouse button state, ANDing together
 	btfsc	AM_BTN,AMB_1S	; the AND state and the set state to ensure
 	btfss	AM_BTN,AMB_1A	; clicks don't get lost
 	bcf	AP_BUF,7	; "
@@ -1873,50 +1867,50 @@ AMFT0H4	bsf	AP_BUF,7	;Copy the mouse button state, ANDing together
 	bsf	AU_FLAG,AU_TXON	; and we are interested in transmission events
 	retlw	low AMFsaTalk0L	;Deal with what happened in the next state
 
-AMFsaTalk0L
+AMFsaTalk0L:
 	btfss	AP_FLAG,AP_COL	;If there was a collision, set the collision
 	bra	AMFT0L0		; bit of register 3, clear the transmit events
 	bsf	AM_R3H,7	; flag and we're done until we get another
 	bcf	AU_FLAG,AU_TXON ; command
 	retlw	low AKFsaIgnore	; "
-AMFT0L0	btfsc	AM_DXH,7	;We handle the X delta differently depending on
+AMFT0L0:	btfsc	AM_DXH,7	;We handle the X delta differently depending on
 	bra	AMFT0L2		; whether it's negative or positive
 	movlw	0xC1		;If it's positive, subtract 63 from it
 	addwf	AM_DXL,F	; "
 	movlw	0xFF		; "
 	addwfc	AM_DXH,F	; "
-	btfsc	STATUS,C	;If it didn't borrow, leave the difference,
+	btfsc	STATUS,STATUS_C_POSN	;If it didn't borrow, leave the difference,
 	bra	AMFT0L1		; it's more than we can convey in one delta
-	movlw	B'00111111'	;If it borrowed, add 63 to the difference and
+	movlw	00111111B	;If it borrowed, add 63 to the difference and
 	addwf	AM_DXL,W	; that's our final delta
 	movwf	AP_BUF		; "
 	clrf	AM_DXH		; "
 	clrf	AM_DXL		; "
 	bra	AMFT0L4		; "
-AMFT0L1	movlw	B'00111111'	;If it didn't borrow, send the delta 63 and
+AMFT0L1:	movlw	00111111B	;If it didn't borrow, send the delta 63 and
 	movwf	AP_BUF		; signal that we need to be serviced again to
 	bsf	AU_FLAG,AU_SRMS	; convey the rest of it
 	bra	AMFT0L4		; "
-AMFT0L2	movlw	0x40		;If it's negative, add 64 to it
+AMFT0L2:	movlw	0x40		;If it's negative, add 64 to it
 	addwf	AM_DXL,F	; "
 	movlw	0		; "
 	addwfc	AM_DXH,F	; "
-	btfss	STATUS,C	;If it didn't overflow, leave the sum, it's
+	btfss	STATUS,STATUS_C_POSN	;If it didn't overflow, leave the sum, it's
 	bra	AMFT0L3		; more than we can convey in one delta
-	movlw	B'01000000'	;If it overflowed, add -64 to the sum and
+	movlw	01000000B	;If it overflowed, add -64 to the sum and
 	addwf	AM_DXL,W	; that's our final delta
 	movwf	AP_BUF		; "
 	clrf	AM_DXL		; "
 	bra	AMFT0L4		; "
-AMFT0L3	movlw	B'01000000'	;If it didn't overflow, send the delta -64 and
+AMFT0L3:	movlw	01000000B	;If it didn't overflow, send the delta -64 and
 	movwf	AP_BUF		; signal that we need to be serviced again to
 	bsf	AU_FLAG,AU_SRMS	; convey the rest of it
-AMFT0L4	btfsc	AM_R3L,1	;If the handler ID is 0x01, halve the delta
+AMFT0L4:	btfsc	AM_R3L,1	;If the handler ID is 0x01, halve the delta
 	bra	AMFT0L5		; value to simulate a 100 cpi mouse
 	lsrf	AP_BUF,F	; "
 	btfsc	AP_BUF,5	; "
 	bsf	AP_BUF,6	; "
-AMFT0L5	bsf	AP_BUF,7	;Copy the mouse button state, ANDing together
+AMFT0L5:	bsf	AP_BUF,7	;Copy the mouse button state, ANDing together
 	btfsc	AM_BTN,AMB_2S	; the AND state and the set state to ensure
 	btfss	AM_BTN,AMB_2A	; clicks don't get lost
 	bcf	AP_BUF,7	; "
@@ -1924,65 +1918,66 @@ AMFT0L5	bsf	AP_BUF,7	;Copy the mouse button state, ANDing together
 	bcf	AU_FLAG,AU_TXON	; and that we no longer want transmit events
 	retlw	low AMFsaTalk0E	;Deal with what happened in the next state
 
-AMFsaTalk0E
+AMFsaTalk0E:
 	btfsc	AP_FLAG,AP_COL	;If there was a collision, set the collision
 	bsf	AM_R3H,7	; bit of register 3 and finish
 	btfsc	AP_FLAG,AP_COL	; "
 	retlw	low AMFsaIgnore	; "
 	swapf	AM_BTN,W	;If the AND and set mouse button state differ,
 	xorwf	AM_BTN,W	; signal that we need to be serviced to get
-	andlw	B'00000011'	; the state again so that a click isn't lost
-	btfss	STATUS,Z	; "
+	andlw	00000011B	; the state again so that a click isn't lost
+	btfss	STATUS,STATUS_Z_POSN	; "
 	bsf	AU_FLAG,AU_SRMS	; "
-	movlw	B'11110000'	;Set all the bits of the AND mouse button
+	movlw	11110000B	;Set all the bits of the AND mouse button
 	iorwf	AM_BTN,F	; state for next time
 	retlw	low AMFsaIgnore
 
-AMFsaTalk3H
+AMFsaTalk3H:
 	movf	AM_R3H,W	;Load the high byte of register 3 for transmit,
-	andlw	B'01110000'	; clearing the MSB (which we use as a collision
+	andlw	01110000B	; clearing the MSB (which we use as a collision
 	movwf	AP_BUF		; flag) and the address
 	movlb	0		;Get a pseudorandom four-bit number and put it
 	movf	TMR1H,W		; into the low nibble of the buffer; this way
 	xorwf	TMR1L,W		; we replace address (which the host already
-	andlw	B'00001111'	; knows) with a random number, which helps with
+	andlw	00001111B	; knows) with a random number, which helps with
 	iorwf	AP_BUF,F	; collision detection
 	movlb	2		; "
 	bsf	AP_FLAG,AP_TXI	;Set the flags to say we have a byte to send
 	bsf	AU_FLAG,AU_TXON	; and we are interested in transmission events
 	retlw	low AMFsaTalk3L	;Deal with what happened in the next state
 
-AMFsaTalk3L
+AMFsaTalk3L:
 	btfss	AP_FLAG,AP_COL	;If there was a collision, set the collision
 	bra	AMFT3L0		; bit of register 3, clear the transmit events
 	bsf	AM_R3H,7	; flag and we're done until we get another
 	bcf	AU_FLAG,AU_TXON	; command
 	retlw	low AMFsaIgnore	; "
-AMFT3L0	movf	AM_R3L,W	;Load the low byte of register 3 for transmit
+AMFT3L0:	movf	AM_R3L,W	;Load the low byte of register 3 for transmit
 	movwf	AP_BUF		; "
 	bsf	AP_FLAG,AP_TXI	;Set the flags to say we have a byte to send
 	bcf	AU_FLAG,AU_TXON	; and that we no longer want transmit events
 	retlw	low AMFsaTalk3E	;Deal with what happened in the next state
 
-AMFsaTalk3E
+AMFsaTalk3E:
 	btfsc	AP_FLAG,AP_COL	;If there was a collision, set the collision
 	bsf	AM_R3H,7	; bit of register 3
 	retlw	low AMFsaIgnore	;Either way, we're done
 
+psect ADFsa, class=CODE, abs, delta=2
+ORG 0xE00
+ADFsa:	
 
-ADFsa	org	0xE00
-
-ADFsaCommand
+ADFsaCommand:
 	btfsc	AP_BUF,2	;Talk is the only command that sets bit 2
 	bra	ADFsaTalk	; "
 	btfsc	AP_BUF,3	;Only talk and listen set bit 3, so if it's not
 	bra	ADFsaListen	; talk, it's listen
 	;fall through		;Ignore flush
 
-ADFsaIgnore
+ADFsaIgnore:
 	retlw	low ADFsaIgnore	;Utility state to ignore until next command
 
-ADFsaListen
+ADFsaListen:
 	lslf	AP_BUF,W	;If register being told to listen is 1 or 2,
 	xorwf	AP_BUF,W	; ignore
 	btfsc	WREG,1		; "
@@ -1991,11 +1986,11 @@ ADFsaListen
 	retlw	low ADFsaLstn3H	; "
 	retlw	low ADFsaLstn00	;If it's 0, next byte goes to listen 0 handler
 
-ADFsaLstn00
+ADFsaLstn00:
 	movf	AD_TLEN,W	;If the queue doesn't have enough space to take
-	andlw	B'01111111'	; another 8 bytes, ignore this command
+	andlw	01111111B	; another 8 bytes, ignore this command
 	addlw	-55		; "
-	btfsc	STATUS,C	; "
+	btfsc	STATUS,STATUS_C_POSN	; "
 	retlw	low ADFsaIgnore	; "
 	movf	AD_TPSH,W	;Load the TX push point into FSR0
 	movwf	FSR0L		; "
@@ -2003,7 +1998,7 @@ ADFsaLstn00
 	movwf	INDF0		; advance the pointer yet
 	retlw	low ADFsaLstn01	;Wait for the next byte
 
-ADFsaLstn01
+ADFsaLstn01:
 	incf	AD_TPSH,W	;Load the TX push point plus 1 into FSR0
 	bsf	WREG,6		; "
 	bcf	WREG,7		; "
@@ -2012,7 +2007,7 @@ ADFsaLstn01
 	movwf	INDF0		; advance the pointer yet
 	retlw	low ADFsaLstn02	;Wait for the next byte
 
-ADFsaLstn02
+ADFsaLstn02:
 	movf	AD_TPSH,W	;Load the TX push point plus 2 into FSR0
 	addlw	2		; "
 	bsf	WREG,6		; "
@@ -2022,7 +2017,7 @@ ADFsaLstn02
 	movwf	INDF0		; advance the pointer yet
 	retlw	low ADFsaLstn03	;Wait for the next byte
 
-ADFsaLstn03
+ADFsaLstn03:
 	movf	AD_TPSH,W	;Load the TX push point plus 3 into FSR0
 	addlw	3		; "
 	bsf	WREG,6		; "
@@ -2032,7 +2027,7 @@ ADFsaLstn03
 	movwf	INDF0		; advance the pointer yet
 	retlw	low ADFsaLstn04	;Wait for the next byte
 
-ADFsaLstn04
+ADFsaLstn04:
 	movf	AD_TPSH,W	;Load the TX push point plus 4 into FSR0
 	addlw	4		; "
 	bsf	WREG,6		; "
@@ -2042,7 +2037,7 @@ ADFsaLstn04
 	movwf	INDF0		; advance the pointer yet
 	retlw	low ADFsaLstn05	;Wait for the next byte
 
-ADFsaLstn05
+ADFsaLstn05:
 	movf	AD_TPSH,W	;Load the TX push point plus 5 into FSR0
 	addlw	5		; "
 	bsf	WREG,6		; "
@@ -2052,7 +2047,7 @@ ADFsaLstn05
 	movwf	INDF0		; advance the pointer yet
 	retlw	low ADFsaLstn06	;Wait for the next byte
 
-ADFsaLstn06
+ADFsaLstn06:
 	movf	AD_TPSH,W	;Load the TX push point plus 6 into FSR0
 	addlw	6		; "
 	bsf	WREG,6		; "
@@ -2062,11 +2057,11 @@ ADFsaLstn06
 	movwf	INDF0		; advance the pointer yet
 	retlw	low ADFsaLstn07	;Deal with everything when we get the last byte
 
-ADFsaLstn07
+ADFsaLstn07:
 	movf	AP_BUF,W	;If the last byte is a count rather than data,
-	andlw	B'11100000'	; skip ahead
-	xorlw	B'10000000'	; "
-	btfsc	STATUS,Z	; "
+	andlw	11100000B	; skip ahead
+	xorlw	10000000B	; "
+	btfsc	STATUS,STATUS_Z_POSN	; "
 	bra	ADFL070		; "
 	movf	AD_TPSH,W	;Load the TX push point plus 7 into FSR0
 	addlw	7		; "
@@ -2081,52 +2076,52 @@ ADFsaLstn07
 	bsf	AD_TPSH,6	; "
 	bcf	AD_TPSH,7	; "
 	movlb	1		;Enable the TX interrupt so data gets sent
-	bsf	PIE1,TXIE	; "
+	bsf	PIE1,PIE1_TXIE_POSN	; "
 	movlb	2		; "
 	retlw	low ADFsaIgnore
-ADFL070	movf	AP_BUF,W	;Take the low three bits of the last byte as
-	andlw	B'00000111'	; the count of how many of the preceding bytes
+ADFL070:	movf	AP_BUF,W	;Take the low three bits of the last byte as
+	andlw	00000111B	; the count of how many of the preceding bytes
 	addwf	AD_TLEN,F	; were valid and increase the queue length and
 	addwf	AD_TPSH,F	; increment and wrap the pointer
 	bsf	AD_TPSH,6	; "
 	bcf	AD_TPSH,7	; "
 	movlb	1		;Enable the TX interrupt so data gets sent
-	bsf	PIE1,TXIE	; "
+	bsf	PIE1,PIE1_TXIE_POSN	; "
 	movlb	2		; "
 	retlw	low ADFsaIgnore
 
-ADFsaLstn3H
+ADFsaLstn3H:
 	movf	AP_BUF,W	;We can't act on the high byte until we know
 	movwf	AU_TEMP		; what the low byte (handler ID) is, so store
 	retlw	low ADFsaLstn3L	; it in temporary space
 
-ADFsaLstn3L
+ADFsaLstn3L:
 	movf	AP_BUF,W	;If handler ID is 0x00, it means to change the
-	btfsc	STATUS,Z	; device's address and SRQ enable bit
+	btfsc	STATUS,STATUS_Z_POSN	; device's address and SRQ enable bit
 	bra	ADFL3L1		; unconditionally
 	addlw	2		;If handler ID is 0xFE, it means to change the
-	btfsc	STATUS,Z	; device's address if a collision hasn't been
+	btfsc	STATUS,STATUS_Z_POSN	; device's address if a collision hasn't been
 	bra	ADFL3L0		; detected
 	retlw	low ADFsaIgnore	;Dummy ignores other handler IDs
-ADFL3L0	btfss	AD_R3H,7	;If a collision has not been detected, skip
+ADFL3L0:	btfss	AD_R3H,7	;If a collision has not been detected, skip
 	bra	ADFL3L2		; ahead to change the address; if one has been
 	bcf	AD_R3H,7	; detected, clear it and ignore this command
 	retlw	low ADFsaIgnore	; "
-ADFL3L1	bcf	AU_FLAG,AU_SEMD	;Copy the state of the SRQ enable bit to the SRQ
+ADFL3L1:	bcf	AU_FLAG,AU_SEMD	;Copy the state of the SRQ enable bit to the SRQ
 	bcf	AD_R3H,5	; enable flag and to our copy of register 3
 	btfsc	AU_TEMP,5	; "
 	bsf	AU_FLAG,AU_SEMD	; "
 	btfsc	AU_TEMP,5	; "
 	bsf	AD_R3H,5	; "
-ADFL3L2	movlw	B'00001111'	;Accept the low four bits of the first received
+ADFL3L2:	movlw	00001111B	;Accept the low four bits of the first received
 	andwf	AU_TEMP,F	; byte as our new address and we're done
 	movf	AD_R3H,W	; "
-	andlw	B'11110000'	; "
+	andlw	11110000B	; "
 	iorwf	AU_TEMP,W	; "
 	movwf	AD_R3H		; "
 	retlw	low ADFsaIgnore	; "
 
-ADFsaTalk
+ADFsaTalk:
 	lslf	AP_BUF,W	;If register being told to talk is 1 or 2,
 	xorwf	AP_BUF,W	; ignore
 	btfsc	WREG,1		; "
@@ -2135,35 +2130,35 @@ ADFsaTalk
 	bra	ADFsaTalk3H	; otherwise it's 0, so fall into talk 0 handler
 	;fall through
 
-ADFsaTalk0
+ADFsaTalk0:
 	bcf	AU_FLAG,AU_SRMD	;Clear the SRQ flag, will re-set it if need be
 	movf	AD_RPOP,W	;If the queue is empty, give no response
 	xorwf	AD_RPSH,W	; "
-	btfsc	STATUS,Z	; "
+	btfsc	STATUS,STATUS_Z_POSN	; "
 	retlw	low ADFsaIgnore	; "
 	clrf	AU_TEMP		;Use temp variable as a counter of bytes sent
 	bsf	AU_FLAG,AU_TXON	;We are interested in transmission events
 	;fall through
 
-ADFsaTalk0By
+ADFsaTalk0By:
 	movf	AD_RPOP,W	;Load the RX queue pop point into FSR0
 	movwf	FSR0L		; "
 	movf	INDF0,W		;Pop the next byte off the queue into the ADB
 	movwf	AP_BUF		; buffer and set it to be sent
 	bsf	AP_FLAG,AP_TXI	; "
 	xorlw	0x95		;0x95 bytes have to be doubled up as the driver
-	btfsc	STATUS,Z	; treats them specially; we use the MSB of the
+	btfsc	STATUS,STATUS_Z_POSN	; treats them specially; we use the MSB of the
 	btfsc	AD_TLEN,7	; TX queue length as a flag since it's unused;
 	bra	ADFT0B0		; if the byte is 0x95 and the flag is not set,
 	bsf	AD_TLEN,7	; set it and skip over incrementing the pointer
 	bra	ADFT0B1		; "
-ADFT0B0	incf	AD_RPOP,F	;Increment and wrap the pointer
+ADFT0B0:	incf	AD_RPOP,F	;Increment and wrap the pointer
 	bcf	AD_RPOP,6	; "
 	bcf	AD_TLEN,7	;Clear the 0x95 flag if it was set
-ADFT0B1	incf	AU_TEMP,F	;Increment the counter of bytes sent
+ADFT0B1:	incf	AU_TEMP,F	;Increment the counter of bytes sent
 	movf	AD_RPOP,W	;If the queue is empty, figure out how to pad
 	xorwf	AD_RPSH,W	; the rest of the eight bytes
-	btfsc	STATUS,Z	; "
+	btfsc	STATUS,STATUS_Z_POSN	; "
 	bra	ADFT0B2		; "
 	incf	AU_TEMP,W	;If the queue isn't empty and we haven't yet
 	btfss	WREG,3		; sent seven data bytes, go around again
@@ -2171,13 +2166,13 @@ ADFT0B1	incf	AU_TEMP,F	;Increment the counter of bytes sent
 	movf	AD_RPOP,W	;Load the RX queue pop point into FSR0
 	movwf	FSR0L		; "
 	movf	INDF0,W		;If the upper nibble of the next byte on the
-	andlw	B'11100000'	; queue is anything but 0x8 or 0x9, we can send
-	xorlw	B'10000000'	; it as our eighth byte and have it interpreted
-	btfss	STATUS,Z	; as data
+	andlw	11100000B	; queue is anything but 0x8 or 0x9, we can send
+	xorlw	10000000B	; it as our eighth byte and have it interpreted
+	btfss	STATUS,STATUS_Z_POSN	; as data
 	retlw	low ADFsaTalk0Fn; "
 	bsf	AU_FLAG,AU_SRMD	;Else, raise SRQ flag so it gets sent later
 	retlw	low ADFsaTalk0Ct;Send a control byte as our eighth byte
-ADFT0B2	movf	AU_TEMP,W	;Depending on how many bytes we've already
+ADFT0B2:	movf	AU_TEMP,W	;Depending on how many bytes we've already
 	brw			; sent when the queue comes up empty, choose:
 	retlw	low ADFsaIgnore	;If none, send no data (shouldn't happen)
 	retlw	low ADFsaTalk0D1;If 1, send 6 dummy bytes and a control byte
@@ -2188,55 +2183,55 @@ ADFT0B2	movf	AU_TEMP,W	;Depending on how many bytes we've already
 	retlw	low ADFsaTalk0D6;If 6, send 1 dummy byte and a control byte
 	retlw	low ADFsaTalk0Ct;If 7, send a control byte
 
-ADFsaTalk0D1
+ADFsaTalk0D1:
 	bsf	AP_FLAG,AP_TXI	;Resend our last byte because it doesn't matter
 	retlw	low ADFsaTalk0D2;Five more dummy bytes to send before control
 
-ADFsaTalk0D2
+ADFsaTalk0D2:
 	bsf	AP_FLAG,AP_TXI	;Resend our last byte because it doesn't matter
 	retlw	low ADFsaTalk0D3;Four more dummy bytes to send before control
 
-ADFsaTalk0D3
+ADFsaTalk0D3:
 	bsf	AP_FLAG,AP_TXI	;Resend our last byte because it doesn't matter
 	retlw	low ADFsaTalk0D4;Three more dummy bytes to send before control
 
-ADFsaTalk0D4
+ADFsaTalk0D4:
 	bsf	AP_FLAG,AP_TXI	;Resend our last byte because it doesn't matter
 	retlw	low ADFsaTalk0D5;Two more dummy bytes to send before control
 
-ADFsaTalk0D5
+ADFsaTalk0D5:
 	bsf	AP_FLAG,AP_TXI	;Resend our last byte because it doesn't matter
 	retlw	low ADFsaTalk0D6;One more dummy byte to send before control
 
-ADFsaTalk0D6
+ADFsaTalk0D6:
 	bsf	AP_FLAG,AP_TXI	;Resend our last byte because it doesn't matter
 	retlw	low ADFsaTalk0Ct;Next byte is control byte
 
-ADFsaTalk0Fn
+ADFsaTalk0Fn:
 	movf	AD_RPOP,W	;Load the RX queue pop point into FSR0
 	movwf	FSR0L		; "
 	movf	INDF0,W		;Pop the next byte off the queue into the ADB
 	movwf	AP_BUF		; buffer and set it to be sent
 	bsf	AP_FLAG,AP_TXI	; "
 	xorlw	0x95		;0x95 bytes have to be doubled up as the driver
-	btfsc	STATUS,Z	; treats them specially; we use the MSB of the
+	btfsc	STATUS,STATUS_Z_POSN	; treats them specially; we use the MSB of the
 	btfsc	AD_TLEN,7	; TX queue length as a flag since it's unused;
 	bra	ADFT0F0		; if the byte is 0x95 and the flag is not set,
 	bsf	AD_TLEN,7	; set it and skip over incrementing the pointer
 	bra	ADFT0F1		; "
-ADFT0F0	incf	AD_RPOP,F	;Increment and wrap the pointer
+ADFT0F0:	incf	AD_RPOP,F	;Increment and wrap the pointer
 	bcf	AD_RPOP,6	; "
 	bcf	AD_TLEN,7	;Clear the 0x95 flag if it was set
-ADFT0F1	movf	AD_RPOP,W	;If the queue is not yet empty, set the flag so
+ADFT0F1:	movf	AD_RPOP,W	;If the queue is not yet empty, set the flag so
 	xorwf	AD_RPSH,W	; the modem signals for service again
-	btfss	STATUS,Z	; "
+	btfss	STATUS,STATUS_Z_POSN	; "
 	bsf	AU_FLAG,AU_SRMD	; "
 	bcf	AU_FLAG,AU_TXON	;We are no longer interested in transmit events
 	retlw	low ADFsaIgnore	;Done
 
-ADFsaTalk0Ct
+ADFsaTalk0Ct:
 	movf	AU_TEMP,W	;If it's not a data byte from 0x00-0x7F, last
-	iorlw	B'10000000'	; byte should be a counter of how many of the
+	iorlw	10000000B	; byte should be a counter of how many of the
 	movwf	AP_BUF		; preceding bytes are valid with the MSB set
 	bsf	AP_FLAG,AP_TXI	; "
 	bcf	AU_FLAG,AU_TXON	;We are no longer interested in transmit events
@@ -2244,54 +2239,55 @@ ADFsaTalk0Ct
 
 ;Serial number "used to be": 44 43 D1 1C 52 E8 E1 E1
 
-ADFsaTalk3H
+ADFsaTalk3H:
 	movf	AD_R3H,W	;Load the high byte of register 3 for transmit,
-	andlw	B'01110000'	; clearing the MSB (which we use as a collision
+	andlw	01110000B	; clearing the MSB (which we use as a collision
 	movwf	AP_BUF		; flag) and the address
 	movlb	0		;Get a pseudorandom four-bit number and put it
 	movf	TMR1H,W		; into the low nibble of the buffer; this way
 	xorwf	TMR1L,W		; we replace address (which the host already
-	andlw	B'00001111'	; knows) with a random number, which helps with
+	andlw	00001111B	; knows) with a random number, which helps with
 	iorwf	AP_BUF,F	; collision detection
 	movlb	2		; "
 	bsf	AP_FLAG,AP_TXI	;Set the flags to say we have a byte to send
 	bsf	AU_FLAG,AU_TXON	; and we are interested in transmission events
 	retlw	low ADFsaTalk3L	;Deal with what happened in the next state
 
-ADFsaTalk3L
+ADFsaTalk3L:
 	btfss	AP_FLAG,AP_COL	;If there was a collision, set the collision
 	bra	ADFT3L0		; bit of register 3, clear the transmit events
 	bsf	AD_R3H,7	; flag and we're done until we get another
 	bcf	AU_FLAG,AU_TXON	; command
 	retlw	low ADFsaIgnore	; "
-ADFT3L0	movf	AD_R3L,W	;Load the low byte of register 3 for transmit
+ADFT3L0:	movf	AD_R3L,W	;Load the low byte of register 3 for transmit
 	movwf	AP_BUF		; "
 	bsf	AP_FLAG,AP_TXI	;Set the flags to say we have a byte to send
 	bcf	AU_FLAG,AU_TXON	; and that we no longer want transmit events
 	retlw	low ADFsaTalk3E	;Deal with what happened in the next state
 
-ADFsaTalk3E
+ADFsaTalk3E:
 	btfsc	AP_FLAG,AP_COL	;If there was a collision, set the collision
 	bsf	AD_R3H,7	; bit of register 3
 	retlw	low ADFsaIgnore	;Either way, we're done
 
+psect AdbFsa, class=CODE, abs, delta=2
+ORG 0xF00            
+AdbFsa:	
 
-AdbFsa	org	0xF00
-
-AdbFsaIdle
+AdbFsaIdle:
 	clrf	TMR0		;Reset timer
 	movf	AP_DTMR,W	;If the down time was 194-206 ticks (800 us +/-
 	addlw	-207		; 3%), this is an attention pulse, so prepare
-	btfsc	STATUS,C	; the shift register to receive a command byte
+	btfsc	STATUS,STATUS_C_POSN	; the shift register to receive a command byte
 	retlw	low AdbFsaIdle	; and transition to receive the first bit
 	addlw	13		; "
-	btfss	STATUS,C	; "
+	btfss	STATUS,STATUS_C_POSN	; "
 	retlw	low AdbFsaIdle	; "
 	movlw	0x01		; "
 	movwf	AP_SR		; "
 	retlw	low AdbFsaCmdBit; "
 
-AdbFsaCmdBit
+AdbFsaCmdBit:
 	btfsc	AP_DTMR,7	;If either the down time or the up time is over
 	retlw	AdbFsaIdle	; 127 (508 us, ridiculous), throw up our hands
 	btfsc	TMR0,7		; and wait for an attention pulse
@@ -2302,40 +2298,40 @@ AdbFsaCmdBit
 	subwf	TMR0,W		; 1 if up time was greater than the midpoint (a
 	rlf	AP_SR,F		; 1 bit) else 0, rotate bit into shift register
 	clrf	TMR0		;Reset Timer0 for next time
-	btfss	STATUS,C	;If we rotated a 0 out of shift register, then
+	btfss	STATUS,STATUS_C_POSN	;If we rotated a 0 out of shift register, then
 	retlw	low AdbFsaCmdBit; there are more command bits to come
 	movf	AP_SR,W		;Else, move the contents of the filled shift
 	movwf	AP_BUF		; register into the buffer and set flag to say
 	bsf	AP_FLAG,AP_RXCI	; that a command has been received
 	movlw	-12		;Set a timer to expire and interrupt after 48us
 	movwf	TMR0		; so that the user program has time to decide
-	bsf	INTCON,TMR0IE	; whether or not to request service or transmit
+	bsf	INTCON,INTCON_TMR0IE_POSN	; whether or not to request service or transmit
 	bsf	AP_FLAG,AP_RISE	;Set to catch rising edge that starts Tlt
 	retlw	low AdbFsaSrq	;Set to enter the state handling service reqs
 
-AdbFsaSrq
+AdbFsaSrq:
 	btfsc	BSR,0		;If for some reason we're here because of an
 	bra	AFSrq0		; edge, cancel our timer interrupt, stop
-	bcf	INTCON,TMR0IE	; catching rising edges, reset timer, and bail
+	bcf	INTCON,INTCON_TMR0IE_POSN	; catching rising edges, reset timer, and bail
 	bcf	AP_FLAG,AP_RISE	; out to waiting for an attention pulse
 	clrf	TMR0		; "
 	retlw	low AdbFsaIdle	; "
-AFSrq0	btfss	AP_FLAG,AP_SRQ	;If the user didn't call for a service request,
+AFSrq0:	btfss	AP_FLAG,AP_SRQ	;If the user didn't call for a service request,
 	retlw	low AdbFsaTlt	; just wait for Tlt to begin
 	bcf	TRISA,AP_APIN	;If the user did call for a service request,
 	movlw	-63		; pull the pin low and set a timer for 252 us
 	movlb	0		; above the 48 us we already waited to release
 	movwf	TMR0		; it
-	bsf	INTCON,TMR0IE	; "
+	bsf	INTCON,INTCON_TMR0IE_POSN	; "
 	retlw	low AdbFsaSrqEnd; "
 
-AdbFsaSrqEnd
+AdbFsaSrqEnd:
 	btfss	BSR,0		;On the off chance we're here because edge, go
 	retlw	low AdbFsaSrqEnd; around again until the timer expires
 	bsf	TRISA,AP_APIN	;Release the pin that we pulled low to request
 	retlw	low AdbFsaTlt	; service and wait for Tlt (could be right now)
 
-AdbFsaTlt
+AdbFsaTlt:
 	bcf	AP_FLAG,AP_RISE	;No longer need to catch rising edges
 	movlw	-65		;Shorten the timeout period to 260 us, which is
 	movwf	TMR0		; slightly longer than Tlt is expected to be
@@ -2343,43 +2339,43 @@ AdbFsaTlt
 	retlw	low AdbFsaTltEnd; wait for data to start
 	movf	TMR1H,W		;Get a pseudorandom between 0 and 15, adjust it
 	xorwf	TMR1L,W		; to between 199 and 214; that will make Timer0
-	andlw	B'00001111'	; overflow in between 168us and 228us, which is
+	andlw	00001111B	; overflow in between 168us and 228us, which is
 	addlw	-57		; close enough to the specced range of 160us to
 	movwf	TMR0		; 240us to wait before transmitting
-	movlw	B'11000000'	;Set the shift register so it outputs a 1 start
+	movlw	11000000B	;Set the shift register so it outputs a 1 start
 	movwf	AP_SR		; bit and then loads data from the buffer
-	bsf	INTCON,TMR0IE	;Set timer to interrupt and bring us to the
+	bsf	INTCON,INTCON_TMR0IE_POSN	;Set timer to interrupt and bring us to the
 	retlw	low AdbFsaTxBitD; transmission start state
 
-AdbFsaTxBitD
+AdbFsaTxBitD:
 	btfsc	BSR,0		;If we're here because of a timer interrupt,
 	bra	AFTxBD0		; as we hope, skip ahead
 	bsf	AP_FLAG,AP_COL	;If not, set the collision flag, clear the
 	bcf	AP_FLAG,AP_TXI	; transmit flag, cancel the timer, and go back
 	clrf	TMR0		; to waiting for an attention pulse
-	bcf	INTCON,TMR0IE	; "
+	bcf	INTCON,INTCON_TMR0IE_POSN	; "
 	retlw	low AdbFsaIdle	; "
-AFTxBD0	bcf	TRISA,AP_APIN	;Pull the pin low
+AFTxBD0:	bcf	TRISA,AP_APIN	;Pull the pin low
 	lslf	AP_SR,F		;Shift the next bit to send into carry bit
-	btfss	STATUS,Z	;If we shifted the placeholder out of the shift
+	btfss	STATUS,STATUS_Z_POSN	;If we shifted the placeholder out of the shift
 	bra	AFTxBD1		; register, continue, else skip ahead
 	btfss	AP_FLAG,AP_TXI	;If there's no new byte ready to load, clear
-	bcf	STATUS,C	; carry so we send a zero as our last bit
+	bcf	STATUS,STATUS_C_POSN	; carry so we send a zero as our last bit
 	btfss	AP_FLAG,AP_TXI	;If there's a new byte ready to load, load it,
 	bra	AFTxBD1		; shift its MSB out and a 1 placeholder into
 	rlf	AP_BUF,W	; its LSB and clear the transmit flag; else
 	movwf	AP_SR		; leave the shift register all zeroes as a
 	bcf	AP_FLAG,AP_TXI	; signal to the up phase state that we're done
-AFTxBD1	movlw	-8		;Set a timer to interrupt in 8 cycles (32us) if
+AFTxBD1:	movlw	-8		;Set a timer to interrupt in 8 cycles (32us) if
 	movlb	0		; sending a 1 bit, double that to 16 cycles
-	btfss	STATUS,C	; (64us) if we're sending a 0 bit, and also
+	btfss	STATUS,STATUS_C_POSN	; (64us) if we're sending a 0 bit, and also
 	lslf	WREG,W		; save this value for use by the up phase state
 	movwf	TMR0		; "
 	movwf	AP_DTMR		; "
-	bsf	INTCON,TMR0IE	; "
+	bsf	INTCON,INTCON_TMR0IE_POSN	; "
 	retlw	low AdbFsaTxBitU; "
 
-AdbFsaTxBitU
+AdbFsaTxBitU:
 	btfss	BSR,0		;If we're here because of the falling edge we
 	retlw	low AdbFsaTxBitU; just triggered, ignore and return posthaste
 	bsf	TRISA,AP_APIN	;Release the pin
@@ -2390,32 +2386,32 @@ AdbFsaTxBitU
 	bsf	AP_FLAG,AP_COL	; "
 	bcf	AP_FLAG,AP_TXI	; "
 	retlw	low AdbFsaIdle	; "
-AFTxBU0	movf	AP_SR,W		;If the down phase let the shift register stay
-	btfsc	STATUS,Z	; at zero, the bit we just transmitted is the
+AFTxBU0:	movf	AP_SR,W		;If the down phase let the shift register stay
+	btfsc	STATUS,STATUS_Z_POSN	; at zero, the bit we just transmitted is the
 	bsf	AP_FLAG,AP_DONE	; stop bit and transmission is over, so set the
-	btfsc	STATUS,Z	; done flag and return to waiting for an
+	btfsc	STATUS,STATUS_Z_POSN	; done flag and return to waiting for an
 	retlw	low AdbFsaIdle	; attention pulse
-	movlw	B'00001000'	;Whatever delay (8 or 16) we did during the
+	movlw	00001000B	;Whatever delay (8 or 16) we did during the
 	xorwf	AP_DTMR,W	; down phase, set a timer to do the other one
 	movwf	TMR0		; "
-	bsf	INTCON,TMR0IE	; "
+	bsf	INTCON,INTCON_TMR0IE_POSN	; "
 	movlb	7		;Reverse the IOC interrupt and clear the flag
 	bcf	IOCAP,AP_APIN	; set by releasing the pin so the timer we just
 	bsf	IOCAN,AP_APIN	; set doesn't immediately get reset
 	bcf	IOCAF,AP_APIN	; "
 	retlw	low AdbFsaTxBitD;Timer will take us to the down phase again
 
-AdbFsaTltEnd
+AdbFsaTltEnd:
 	clrf	TMR0		;This state is the end of Tlt and the start of
 	retlw	low AdbFsaRxStrt; host or other device transmitting data
 
-AdbFsaRxStrt
+AdbFsaRxStrt:
 	movlw	0x01		;Start bit should be 1, but who cares, just set
 	movwf	AP_SR		; up the shift register to receive the first
 	clrf	TMR0		; data bit
 	retlw	low AdbFsaRxBit	; "
 
-AdbFsaRxBit	
+AdbFsaRxBit:	
 	btfsc	AP_DTMR,7	;If either the down time or the up time is over
 	retlw	AdbFsaIdle	; 127 (508 us, ridiculous), throw up our hands
 	btfsc	TMR0,7		; and wait for an attention pulse
@@ -2426,7 +2422,7 @@ AdbFsaRxBit
 	subwf	TMR0,W		; 1 if up time was greater than the midpoint (a
 	rlf	AP_SR,F		; 1 bit) else 0, rotate bit into shift register
 	clrf	TMR0		;Reset Timer0 for next time
-	btfss	STATUS,C	;If we rotated a 0 out of shift register, then
+	btfss	STATUS,STATUS_C_POSN	;If we rotated a 0 out of shift register, then
 	retlw	low AdbFsaRxBit	; there are more data bits to come
 	movf	AP_SR,W		;Else, move the contents of the filled shift
 	movwf	AP_BUF		; register into the buffer and set flag to say
