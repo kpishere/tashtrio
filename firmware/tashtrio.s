@@ -52,8 +52,8 @@
   CONFIG  WRT = OFF            ; Flash Memory Self-Write Protection (Write protection off)
   CONFIG  PLLEN = ON           ; PLL Enable (4x PLL enabled for 32Mhz clock)
   CONFIG  STVREN = ON          ; Stack Overflow/Underflow Reset Enable (Stack Overflow or Underflow will not cause a Reset)
-  CONFIG  LVP = ON             ; Low-Voltage Programming Enable (Low-voltage programming enabled)
-
+  CONFIG  LVP = OFF            ; Low-Voltage Programming Enable (Low-voltage programming enabled)
+			       ; NB: LVP needs to be off for RA3 to work as an input
 #include <xc.inc>
 
 ;;; Macros ;;;
