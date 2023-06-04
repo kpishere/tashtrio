@@ -84,31 +84,11 @@ LDLIBSOPTIONS=
 # fixDeps replaces a bunch of sed/cat/printf statements that slow down the build
 FIXDEPS=fixDeps
 
-# The following macros may be used in the pre and post step lines
-_/_=/
-ShExtension=.sh
-Device=PIC12F1840
-ProjectDir=/Users/kevinpeck/Desktop/MacClassic_KeyboardMouse/tashtrio/mplab/tashtrio.X
-ProjectName=tashtrio
-ConfName=default
-ImagePath=${DISTDIR}/tashtrio.X.${IMAGE_TYPE}.${OUTPUT_SUFFIX}
-ImageDir=${DISTDIR}
-ImageName=tashtrio.X.${IMAGE_TYPE}.${OUTPUT_SUFFIX}
-ifeq ($(TYPE_IMAGE), DEBUG_RUN)
-IsDebug="true"
-else
-IsDebug="false"
-endif
-
 .build-conf:  ${BUILD_SUBPROJECTS}
 ifneq ($(INFORMATION_MESSAGE), )
 	@echo $(INFORMATION_MESSAGE)
 endif
 	${MAKE}  -f nbproject/Makefile-default.mk ${DISTDIR}/tashtrio.X.${IMAGE_TYPE}.${OUTPUT_SUFFIX}
-	@echo "--------------------------------------"
-	@echo "User defined post-build step: [PATH=/usr/local/share/pk2:$PATH;/usr/local/bin/pk2cmd -F${DISTDIR}/tashtrio.X.${IMAGE_TYPE}.${OUTPUT_SUFFIX} -Y -PPIC12F1840 -M]"
-	@PATH=/usr/local/share/pk2:$PATH;/usr/local/bin/pk2cmd -F${DISTDIR}/tashtrio.X.${IMAGE_TYPE}.${OUTPUT_SUFFIX} -Y -PPIC12F1840 -M
-	@echo "--------------------------------------"
 
 MP_PROCESSOR_OPTION=PIC12F1840
 FINAL_IMAGE_NAME_MINUS_EXTENSION=${DISTDIR}/tashtrio.X.${IMAGE_TYPE}

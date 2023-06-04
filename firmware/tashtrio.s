@@ -39,20 +39,20 @@
 // CONFIG1
   CONFIG  FOSC = INTOSC         ; Oscillator Selection (INTOSC oscillator: I/O function on CLKIN pin)
   CONFIG  WDTE = OFF            ; Watchdog Timer Enable (WDT disabled)
-  CONFIG  PWRTE = ON           ; Power-up Timer Enable (PWRT disabled)
-  CONFIG  MCLRE = OFF            ; MCLR Pin Function Select (MCLR/VPP pin function is enabled)
+  CONFIG  PWRTE = ON            ; Power-up Timer Enable (PWRT disabled)
+  CONFIG  MCLRE = OFF           ; MCLR Pin Function Select (MCLR/VPP pin function is enabled)
   CONFIG  CP = OFF              ; Flash Program Memory Code Protection (Program memory code protection is disabled)
   CONFIG  CPD = OFF             ; Data Memory Code Protection (Data memory code protection is disabled)
-  CONFIG  BOREN = OFF            ; Brown-out Reset Enable (Brown-out Reset enabled)
+  CONFIG  BOREN = OFF           ; Brown-out Reset Enable (Brown-out Reset enabled)
   CONFIG  CLKOUTEN = OFF        ; Clock Out Enable (CLKOUT function is disabled. I/O or oscillator function on the CLKOUT pin)
   CONFIG  IESO = OFF            ; Internal/External Switchover (Internal/External Switchover mode is disabled)
   CONFIG  FCMEN = OFF           ; Fail-Safe Clock Monitor Enable (Fail-Safe Clock Monitor is disabled)
 
 // CONFIG2
-  CONFIG  WRT = OFF             ; Flash Memory Self-Write Protection (Write protection off)
-  CONFIG  PLLEN = ON            ; PLL Enable (4x PLL enabled for 32Mhz clock)
+  CONFIG  WRT = OFF            ; Flash Memory Self-Write Protection (Write protection off)
+  CONFIG  PLLEN = ON           ; PLL Enable (4x PLL enabled for 32Mhz clock)
   CONFIG  STVREN = ON          ; Stack Overflow/Underflow Reset Enable (Stack Overflow or Underflow will not cause a Reset)
-  CONFIG  LVP = OFF              ; Low-Voltage Programming Enable (Low-voltage programming enabled)
+  CONFIG  LVP = ON             ; Low-Voltage Programming Enable (Low-voltage programming enabled)
 
 #include <xc.inc>
 
@@ -199,13 +199,15 @@ PU_TXME	equ	2	;Set when the mouse FSA wants to know when TX done
 	PM_TEMP	equ 0x15D ;Temporary holding variable between mouse states
 	
 ;;; Vectors ;;;
-psect resetVect, class=CODE, delta=2
+psect resetVect, class=CODE,abs, delta=2
+ORG 0x000
 resetVect:
-    pagesel main
+;    pagesel main
     goto Init
 
 ;;; Interrupt Handler ;;;
-psect interruptVect, class=CODE, delta=2
+psect interruptVect, class=CODE, abs, delta=2
+ORG 0x004
 Interrupt:
 	;TODO should the ADB timer enabled-or-not be handled like the PS/2 one?
 	movlp	0		;Copy the Timer0 flag into the carry bit so it
@@ -1163,6 +1165,10 @@ PMFsaS0:	movf	PP_BUF,W	;If the byte we just got is the mouse device ID
 	movlb	7		;Set the IOC interrupt bit just in case the
 	bsf	IOCAF,PP_CPIN	; clock line is already low
 	movlb	2		; "
+	nop ;Add delay for longer clock low to device
+	nop
+	nop
+	nop
 	bsf	PP_FLAG,PP_TXMI	;Set the flags saying we have a byte to send
 	bsf	PU_FLAG,PU_TXME	; and want to be notified when it's finished
 	retlw	low PMFsaSent	;Transition and wait for byte to finish sending
